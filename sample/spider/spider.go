@@ -4,9 +4,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/shiyanhui/dht"
 	"net/http"
 	_ "net/http/pprof"
+
+	"github.com/hktalent/dht"
 )
 
 type file struct {

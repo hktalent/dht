@@ -8,6 +8,8 @@ import (
 	"math"
 	"net"
 	"time"
+
+	stlist "github.com/hktalent/gohktools/lib/utils"
 )
 
 const (
@@ -27,6 +29,8 @@ var (
 
 // Config represents the configure of dht.
 type Config struct {
+	// 本地节点id
+	LocalNodeId string
 	// in mainline dht, k = 8
 	K int
 	// for crawling mode, we put all nodes in one bucket, so KBucketSize may
@@ -75,15 +79,12 @@ type Config struct {
 // NewStandardConfig returns a Config pointer with default values.
 func NewStandardConfig() *Config {
 	return &Config{
-		K:           8,
-		KBucketSize: 8,
-		Network:     "udp4",
-		Address:     ":6881",
-		PrimeNodes: []string{
-			"router.bittorrent.com:6881",
-			"router.utorrent.com:6881",
-			"dht.transmissionbt.com:6881",
-		},
+		LocalNodeId:          hex.EncodeToString([]byte("https://ee.51pwn.com")[:20]),
+		K:                    8,
+		KBucketSize:          8,
+		Network:              "udp4",
+		Address:              ":6881",
+		PrimeNodes:           stlist.StunList{}.GetDhtListRawA(),
 		NodeExpriedAfter:     time.Duration(time.Minute * 15),
 		KBucketExpiredAfter:  time.Duration(time.Minute * 15),
 		CheckKBucketPeriod:   time.Duration(time.Second * 30),
@@ -135,7 +136,7 @@ func New(config *Config) *DHT {
 		config = NewStandardConfig()
 	}
 
-	node, err := newNode(randomString(20), config.Network, config.Address)
+	node, err := newNode(config.LocalNodeId, config.Network, config.Address)
 	if err != nil {
 		panic(err)
 	}
