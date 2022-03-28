@@ -77,17 +77,18 @@ type Config struct {
 }
 
 var (
-	LocalNodeId = hex.EncodeToString([]byte("https://ee.51pwn.com")[:20])
+	LocalNodeId = hex.EncodeToString([]byte("https://ee.51pwn.com"))[:20]
 )
 
 // NewStandardConfig returns a Config pointer with default values.
 func NewStandardConfig() *Config {
 	return &Config{
-		LocalNodeId:          LocalNodeId,
-		K:                    8,
-		KBucketSize:          8,
-		Network:              "udp4",
-		Address:              ":6881",
+		LocalNodeId: LocalNodeId,
+		K:           8,
+		KBucketSize: 8,
+		Network:     "udp4",
+		// fix: panic: listen udp4 :6881: bind: address already in use
+		Address:              ":0",
 		PrimeNodes:           stlist.StunList{}.GetDhtListRawA(),
 		NodeExpriedAfter:     time.Duration(time.Minute * 15),
 		KBucketExpiredAfter:  time.Duration(time.Minute * 15),

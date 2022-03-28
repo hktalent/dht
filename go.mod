@@ -2,10 +2,9 @@ module github.com/hktalent/dht
 
 go 1.18
 
-
 require (
-	github.com/hktalent/gohktools v1.0.1
 	github.com/aidarkhanov/nanoid/v2 v2.0.5 // indirect
+	github.com/hktalent/gohktools v1.0.1 // indirect
 	github.com/ipfs/go-cid v0.1.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.12 // indirect
