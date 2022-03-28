@@ -76,10 +76,14 @@ type Config struct {
 	RefreshNodeNum int
 }
 
+var (
+	LocalNodeId = hex.EncodeToString([]byte("https://ee.51pwn.com")[:20])
+)
+
 // NewStandardConfig returns a Config pointer with default values.
 func NewStandardConfig() *Config {
 	return &Config{
-		LocalNodeId:          hex.EncodeToString([]byte("https://ee.51pwn.com")[:20]),
+		LocalNodeId:          LocalNodeId,
 		K:                    8,
 		KBucketSize:          8,
 		Network:              "udp4",
@@ -136,6 +140,9 @@ func New(config *Config) *DHT {
 		config = NewStandardConfig()
 	}
 
+	if "" == config.LocalNodeId {
+		config.LocalNodeId = LocalNodeId
+	}
 	node, err := newNode(config.LocalNodeId, config.Network, config.Address)
 	if err != nil {
 		panic(err)

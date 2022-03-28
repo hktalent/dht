@@ -1,4 +1,4 @@
-![](https://raw.githubusercontent.com/shiyanhui/dht/master/doc/screen-shot.png)
+![](https://raw.githubusercontent.com/hktalent/dht/master/doc/screen-shot.png)
 
 在这个视频上你可以看到爬取效果[Youtube](https://www.youtube.com/watch?v=AIpeQtw22kc).
 
@@ -20,16 +20,16 @@ BTDigg的替代品。
 
 ## Installation
 
-    go get github.com/shiyanhui/dht
+    go get github.com/hktalent/dht
 
 ## Example
 
-下面是一个简单的爬虫例子，你可以到[这里](https://github.com/shiyanhui/dht/blob/master/sample)看完整的Demo。
+下面是一个简单的爬虫例子，你可以到[这里](https://github.com/hktalent/dht/blob/master/sample)看完整的Demo。
 
 ```go
 import (
     "fmt"
-    "github.com/shiyanhui/dht"
+    "github.com/hktalent/dht"
 )
 
 func main() {
@@ -55,7 +55,7 @@ func main() {
 
 ## Download
 
-这个是已经编译好的Demo二进制文件，你可以到这里[下载](https://github.com/shiyanhui/dht/files/407021/spider.zip)。
+这个是已经编译好的Demo二进制文件，你可以到这里[下载](https://github.com/hktalent/dht/files/407021/spider.zip)。
 
 ## 注意
 
@@ -71,8 +71,8 @@ func main() {
 
 ## Blog
 
-你可以在[这里](https://github.com/shiyanhui/dht/wiki)看到DHT Spider教程。
+你可以在[这里](https://github.com/hktalent/dht/wiki)看到DHT Spider教程。
 
 ## License
 
-[MIT](https://github.com/shiyanhui/dht/blob/master/LICENSE)
+[MIT](https://github.com/hktalent/dht/blob/master/LICENSE)
