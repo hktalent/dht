@@ -6,6 +6,7 @@ See the video on the [Youtube](https://www.youtube.com/watch?v=AIpeQtw22kc).
 
 ## what's the new
 - and config.LocalNodeId
+- config.PrimeNodes add 3982 ips
 
 ## Introduction
 
