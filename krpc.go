@@ -8,6 +8,21 @@ import (
 	"time"
 )
 
+/* DHT 协议
+通过 get_peers 找到节点
+ping 发现坏死的、不活跃的节点，并移除出；判活心跳
+find_node 用来查找某一个节点ID为Key的具体信息，信息里包括ip，port，ID
+		  被用来查找给定 ID 的 node 的联系信息，请求包含 2 个参数，第一个参数是 id，包含了请求 node ID。第二个参数是 target，包含了请求者正在查找的 node ID。
+		  当一个 node 接收到了 find_node 的 query，他应该给出对应的回复，回复中包含 2 个关键字 id 和 nodes，nodes 是字符串类型，包含了被请求 node 的路由表中最接近目标
+		  node 的 K(8) 个最接近的 node 的联系信息
+get_peers 用来查找某一个资源ID为Key的具体信息，信息里包含可提供下载该资源的ip:port列表
+		  与种子文件的 infohash 有关。这时 q=get_peers。请求包含 2 个参数。第一个参数是 id，包含了请求 node 的 ID。第二个参数是 info_hash，它代表种子文件的 infohash
+          如果被请求的 node 有对应 info_hash 的 peers，他将返回一个关键字 values，这是一个列表类型的字符串。每一个字符串包含了 CompactIP-address/portinfo 格式的 peers 信息。
+		  如果被请求的 node 没有这个 infohash 的 peers，那么他将返回关键字 nodes，这个关键字包含了被请求 node 的路由表中离 info_hash 最近的 K 个 node，使用 Compactnodeinfo 格式回复。
+		  在这两种情况下，关键字 token 都将被返回。之后的 annouce_peer 请求中必须包含 token。token 是一个短的二进制字符串
+		  Infohash的16进制编码，共40字符
+announce_peer 宣布控制查询节点的对等体正在端口上下载种子。场景，多机器同发布一个相同直的全局的hash，便于建立联系
+*/
 const (
 	pingType         = "ping"
 	findNodeType     = "find_node"
@@ -353,7 +368,10 @@ func (tm *transactionManager) getPeers(no *node, infoHash string) {
 	})
 }
 
-// announcePeer sends announce_peer query to the chan.
+/*
+announcePeer sends announce_peer query to the chan.
+implied_port 如果它存在且非零，则应忽略端口参数，而应使用UDP数据包的源端口作为对等体的端口,所以通常为1
+*/
 func (tm *transactionManager) announcePeer(
 	no *node, infoHash string, impliedPort, port int, token string) {
 

@@ -167,10 +167,12 @@ type Wire struct {
 	workerTokens chan struct{}
 }
 
-// NewWire returns a Wire pointer.
-//   - blackListSize: the blacklist size
-//   - requestQueueSize: the max requests it can buffers
-//   - workerQueueSize: the max goroutine downloading workers
+/*
+NewWire returns a Wire pointer.
+  - blackListSize: the blacklist size
+  - requestQueueSize: the max requests it can buffers
+  - workerQueueSize: the max goroutine downloading workers
+*/
 func NewWire(blackListSize, requestQueueSize, workerQueueSize int) *Wire {
 	return &Wire{
 		blackList:    newBlackList(blackListSize),

@@ -11,7 +11,10 @@ import (
 	"time"
 )
 
+/*
 // randomString generates a size-length string randomly.
+随机字符串，通常用来创建全球唯一node id，或资源id
+*/
 func randomString(size int) string {
 	buff := make([]byte, size)
 	rand.Read(buff)
@@ -49,8 +52,11 @@ func int2bytes(val uint64) []byte {
 	return data[:1]
 }
 
-// decodeCompactIPPortInfo decodes compactIP-address/port info in BitTorrent
-// DHT Protocol. It returns the ip and port number.
+/*
+decodeCompactIPPortInfo decodes compactIP-address/port info in BitTorrent
+DHT Protocol. It returns the ip and port number.
+info 长度必须为6： 前4 byte为ip地址，后2byte为uint64 port
+*/
 func decodeCompactIPPortInfo(info string) (ip net.IP, port int, err error) {
 	if len(info) != 6 {
 		err = errors.New("compact info should be 6-length long")
@@ -81,7 +87,10 @@ func encodeCompactIPPortInfo(ip net.IP, port int) (info string, err error) {
 	return
 }
 
-// getLocalIPs returns local ips.
+/*
+ getLocalIPs returns local ips.
+通过 枚举net.InterfaceAddrs() 得到本地所有ip地址
+*/
 func getLocalIPs() (ips []string) {
 	ips = make([]string, 0, 6)
 
@@ -100,7 +109,14 @@ func getLocalIPs() (ips []string) {
 	return
 }
 
-// getRemoteIP returns the wlan ip.
+/*
+getRemoteIP returns the wlan ip.
+通过
+curl -H 'User-Agent:curl' http://ifconfig.me
+获取本机互联网ip地址
+缺点不通互联网的时候不准确
+其他方式可以通过webrtc来获得本地地址更加准确和方便
+*/
 func getRemoteIP() (ip string, err error) {
 	client := &http.Client{
 		Timeout: time.Second * 30,

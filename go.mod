@@ -2,9 +2,10 @@ module github.com/hktalent/dht
 
 go 1.18
 
+require github.com/hktalent/gohktools v1.0.1
+
 require (
 	github.com/aidarkhanov/nanoid/v2 v2.0.5 // indirect
-	github.com/hktalent/gohktools v1.0.1 // indirect
 	github.com/ipfs/go-cid v0.1.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.12 // indirect
@@ -21,7 +22,7 @@ require (
 	github.com/olivere/elastic/v7 v7.0.32 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
-	golang.org/x/crypto v0.0.0-20220321153916-2c7772ba3064 // indirect
-	golang.org/x/sys v0.0.0-20220327210214-530d0810a4d0 // indirect
+	golang.org/x/crypto v0.0.0-20220331220935-ae2d96664a29 // indirect
+	golang.org/x/sys v0.0.0-20220403205710-6acee93ad0eb // indirect
 	lukechampine.com/blake3 v1.1.7 // indirect
 )

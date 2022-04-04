@@ -15,7 +15,7 @@ import (
 const (
 	// StandardMode follows the standard protocol
 	StandardMode = iota
-	// CrawlMode for crawling the dht network.
+	// CrawlMode for crawling the dht network.值为1
 	CrawlMode
 )
 
@@ -25,6 +25,7 @@ var (
 	// ErrOnGetPeersResponseNotSet is the error that config
 	// OnGetPeersResponseNotSet is not set when call dht.GetPeers.
 	ErrOnGetPeersResponseNotSet = errors.New("OnGetPeersResponse is not set")
+	ErrOnAnnouncePeerNotSet     = errors.New("OnAnnouncePeer is not set")
 )
 
 // Config represents the configure of dht.
@@ -78,6 +79,7 @@ type Config struct {
 
 var (
 	LocalNodeId = hex.EncodeToString([]byte("https://ee.51pwn.com"))[:20]
+	g_nX        = 10
 )
 
 // NewStandardConfig returns a Config pointer with default values.
@@ -88,31 +90,41 @@ func NewStandardConfig() *Config {
 		KBucketSize: 8,
 		Network:     "udp4",
 		// fix: panic: listen udp4 :6881: bind: address already in use
-		Address:              ":0",
-		PrimeNodes:           stlist.StunList{}.GetDhtListRawA(),
-		NodeExpriedAfter:     time.Duration(time.Minute * 15),
-		KBucketExpiredAfter:  time.Duration(time.Minute * 15),
-		CheckKBucketPeriod:   time.Duration(time.Second * 30),
+		Address:    ":0",
+		PrimeNodes: stlist.StunList{}.GetDhtListRawA(),
+		// 节点、kbucket有效期15分钟
+		NodeExpriedAfter:    time.Duration(time.Minute * 15),
+		KBucketExpiredAfter: time.Duration(time.Minute * 15),
+		// kbucket检查 30秒
+		CheckKBucketPeriod: time.Duration(time.Second * 30),
+		// token有效期10分钟
 		TokenExpiredAfter:    time.Duration(time.Minute * 10),
 		MaxTransactionCursor: math.MaxUint32,
-		MaxNodes:             5000,
+		MaxNodes:             5000 * g_nX,
 		BlockedIPs:           make([]string, 0),
 		BlackListMaxSize:     65536,
 		Try:                  2,
 		Mode:                 StandardMode,
-		PacketJobLimit:       1024,
-		PacketWorkerLimit:    256,
-		RefreshNodeNum:       8,
+		PacketJobLimit:       1024 * g_nX,
+		PacketWorkerLimit:    256 * g_nX,
+		RefreshNodeNum:       8 * g_nX,
 	}
 }
 
-// NewCrawlConfig returns a config in crawling mode.
+/*
+NewCrawlConfig returns a config in crawling mode.
+爬虫配置
+1、节点和kbucket有效期为0
+2、监测kbucket周期5秒
+3、当前node为空节点
+*/
 func NewCrawlConfig() *Config {
 	config := NewStandardConfig()
 	config.NodeExpriedAfter = 0
 	config.KBucketExpiredAfter = 0
 	config.CheckKBucketPeriod = time.Second * 5
 	config.KBucketSize = math.MaxInt32
+	// 空节点模式用于做爬虫专用
 	config.Mode = CrawlMode
 	config.RefreshNodeNum = 256
 
@@ -144,7 +156,9 @@ func New(config *Config) *DHT {
 	if "" == config.LocalNodeId {
 		config.LocalNodeId = LocalNodeId
 	}
-	node, err := newNode(config.LocalNodeId, config.Network, config.Address)
+	// node, err := newNode(config.LocalNodeId, config.Network, config.Address)
+	// 每个节点id全球唯一，写死了要出问题
+	node, err := newNode(randomString(20), config.Network, config.Address)
 	if err != nil {
 		panic(err)
 	}
@@ -244,7 +258,39 @@ func (dht *DHT) id(target string) string {
 	return target[:15] + dht.node.id.RawString()[15:]
 }
 
-// GetPeers returns peers who have announced having infoHash.
+/*
+1、通过infoHash 通知相邻节点，我在下载、关注infoHash的种子文件
+*/
+func (dht *DHT) AnnouncePeer(infoHash string) error {
+	if !dht.Ready {
+		return ErrNotReady
+	}
+	if dht.OnAnnouncePeer == nil {
+		return ErrOnAnnouncePeerNotSet
+	}
+	if len(infoHash) == 40 {
+		data, err := hex.DecodeString(infoHash)
+		if err != nil {
+			return err
+		}
+		infoHash = string(data)
+	}
+	// 相邻节点
+	neighbors := dht.routingTable.GetNeighbors(
+		newBitmapFromString(infoHash), dht.routingTable.Len())
+
+	// no.id.RawString()
+	for _, no := range neighbors {
+		dht.transactionManager.announcePeer(no, infoHash, 1, no.addr.Port, dht.tokenManager.token(no.addr))
+	}
+
+	return nil
+}
+
+/*
+GetPeers 向相邻节点发起 hash查询，所以，这种查询需要间隔时间不停查询，直到有结果
+GetPeers returns peers who have announced having infoHash.
+*/
 func (dht *DHT) GetPeers(infoHash string) error {
 	if !dht.Ready {
 		return ErrNotReady
@@ -261,7 +307,7 @@ func (dht *DHT) GetPeers(infoHash string) error {
 		}
 		infoHash = string(data)
 	}
-
+	// 相邻节点
 	neighbors := dht.routingTable.GetNeighbors(
 		newBitmapFromString(infoHash), dht.routingTable.Len())
 

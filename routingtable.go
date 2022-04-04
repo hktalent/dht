@@ -19,12 +19,17 @@ type node struct {
 	lastActiveTime time.Time
 }
 
-// newNode returns a node pointer.
+/*
+ newNode returns a node pointer.
+ 创建节点
+ 节点id必须是全球唯一的
+ id长度不超过20byte,且不能小于20byte
+*/
 func newNode(id, network, address string) (*node, error) {
+	// id = id[:20]
 	if len(id) != 20 {
 		return nil, errors.New("node id should be a 20-length string")
 	}
-
 	addr, err := net.ResolveUDPAddr(network, address)
 	if err != nil {
 		return nil, err
@@ -33,7 +38,12 @@ func newNode(id, network, address string) (*node, error) {
 	return &node{newBitmapFromString(id), addr, time.Now()}, nil
 }
 
-// newNodeFromCompactInfo parses compactNodeInfo and returns a node pointer.
+/*
+newNodeFromCompactInfo parses compactNodeInfo and returns a node pointer.
+compactNodeInfo 长度必须为26 byte
+前20 byte将拆分为id
+后6byte 将拆分为 ip & port
+*/
 func newNodeFromCompactInfo(
 	compactNodeInfo string, network string) (*node, error) {
 
@@ -47,29 +57,40 @@ func newNodeFromCompactInfo(
 	return newNode(id, network, genAddress(ip.String(), port))
 }
 
-// CompactIPPortInfo returns "Compact IP-address/port info".
-// See http://www.bittorrent.org/beps/bep_0005.html.
+/*
+当前节点的ip port 信息编码转换为 CompactIPPortInfo 格式
+CompactIPPortInfo returns "Compact IP-address/port info".
+See http://www.bittorrent.org/beps/bep_0005.html
+*/
 func (node *node) CompactIPPortInfo() string {
 	info, _ := encodeCompactIPPortInfo(node.addr.IP, node.addr.Port)
 	return info
 }
 
-// CompactNodeInfo returns "Compact node info".
-// See http://www.bittorrent.org/beps/bep_0005.html.
+/*
+当前节点的ip port 信息编码转换为 ipraw + CompactIPPortInfo 格式
+CompactNodeInfo returns "Compact node info".
+See http://www.bittorrent.org/beps/bep_0005.html
+*/
 func (node *node) CompactNodeInfo() string {
 	return strings.Join([]string{
 		node.id.RawString(), node.CompactIPPortInfo(),
 	}, "")
 }
 
-// Peer represents a peer contact.
+/*
+Peer represents a peer contact.
+每个peer有：ip、port、token
+*/
 type Peer struct {
 	IP    net.IP
 	Port  int
 	token string
 }
 
-// newPeer returns a new peer pointer.
+/*
+newPeer returns a new peer pointer.
+*/
 func newPeer(ip net.IP, port int, token string) *Peer {
 	return &Peer{
 		IP:    ip,
@@ -78,7 +99,10 @@ func newPeer(ip net.IP, port int, token string) *Peer {
 	}
 }
 
-// newPeerFromCompactIPPortInfo create a peer pointer by compact ip/port info.
+/*
+newPeerFromCompactIPPortInfo create a peer pointer by compact ip/port info.
+compactInfo 长度为6，包含ip和port信息，也就是不支持ipv6
+*/
 func newPeerFromCompactIPPortInfo(compactInfo, token string) (*Peer, error) {
 	ip, port, err := decodeCompactIPPortInfo(compactInfo)
 	if err != nil {
@@ -95,14 +119,27 @@ func (p *Peer) CompactIPPortInfo() string {
 	return info
 }
 
-// peersManager represents a proxy that manipulates peers.
+/*
+peersManager represents a proxy that manipulates peers.
+下一步计划将peer信息存储到数据库
+dht对象包含
+配置信息
+路由表
+节点信息
+连接信息
+dht是一个链式结构
+*/
 type peersManager struct {
 	sync.RWMutex
 	table *syncedMap
 	dht   *DHT
 }
 
-// newPeersManager returns a new peersManager.
+/*
+newPeersManager returns a new peersManager.
+初始化一个newPeersManager管理器，
+等同于dht对象是一个链式对象总顶级对象
+*/
 func newPeersManager(dht *DHT) *peersManager {
 	return &peersManager{
 		table: newSyncedMap(),
@@ -110,7 +147,10 @@ func newPeersManager(dht *DHT) *peersManager {
 	}
 }
 
-// Insert adds a peer into peersManager.
+/*
+Insert adds a peer into peersManager.
+插入节点，并检查队列长度，大于K就将最前面的peer删除
+*/
 func (pm *peersManager) Insert(infoHash string, peer *Peer) {
 	pm.Lock()
 	if _, ok := pm.table.Get(infoHash); !ok {
@@ -202,8 +242,11 @@ func (bucket *kbucket) Insert(no *node) bool {
 	return isNew
 }
 
-// Replace removes node, then put bucket.candidates.Back() to the right
-// place of bucket.nodes.
+/*
+Replace removes node, then put bucket.candidates.Back() to the right
+place of bucket.nodes.
+不管节点是否存在，都做一次删除，在何时时间位置插入
+*/
 func (bucket *kbucket) Replace(no *node) {
 	bucket.nodes.Delete(no.id.RawString())
 	bucket.UpdateTimestamp()
@@ -229,7 +272,10 @@ func (bucket *kbucket) Replace(no *node) {
 	}
 }
 
-// Fresh pings the expired nodes in the bucket.
+/*
+ping所有节点，确保只留下活跃的节点
+Fresh pings the expired nodes in the bucket.
+*/
 func (bucket *kbucket) Fresh(dht *DHT) {
 	for e := range bucket.nodes.Iter() {
 		no := e.Value.(*node)
@@ -414,7 +460,10 @@ func (rt *routingTable) Insert(nd *node) bool {
 	return false
 }
 
-// GetNeighbors returns the size-length nodes closest to id.
+/*
+获得相邻节点
+GetNeighbors returns the size-length nodes closest to id.
+*/
 func (rt *routingTable) GetNeighbors(id *bitmap, size int) []*node {
 	rt.RLock()
 	nodes := make([]interface{}, 0, rt.cachedNodes.Len())
@@ -579,7 +628,7 @@ func getTopK(queue []interface{}, id *bitmap, k int) []interface{} {
 		node := value.(*node)
 		distance := id.Xor(node.id)
 		if topkHeap.Len() == k {
-			var last = topkHeap[topkHeap.Len() - 1]
+			var last = topkHeap[topkHeap.Len()-1]
 			if last.distance.Compare(distance, maxPrefixLength) == 1 {
 				item := &heapItem{
 					distance,

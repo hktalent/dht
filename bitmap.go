@@ -6,7 +6,11 @@ import (
 	"strings"
 )
 
-// bitmap represents a bit array.
+/*
+bitmap represents a bit array.
+发送、响应数据片段格式
+size:[]byte
+*/
 type bitmap struct {
 	Size int
 	data []byte
