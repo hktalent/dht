@@ -5,11 +5,10 @@ package dht
 import (
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"math"
 	"net"
 	"time"
-
-	stlist "github.com/hktalent/gohktools/lib/utils"
 )
 
 const (
@@ -105,7 +104,7 @@ func NewStandardConfig() *Config {
 		Network:     "udp4",
 		// fix: panic: listen udp4 :6881: bind: address already in use
 		Address:    ":0",
-		PrimeNodes: stlist.StunList{}.GetDhtListRawA(),
+		PrimeNodes: StunList{}.GetDhtUdpLists(),
 		// 节点、kbucket有效期15分钟
 		NodeExpriedAfter:    time.Duration(time.Minute * 15),
 		KBucketExpiredAfter: time.Duration(time.Minute * 15),
@@ -253,8 +252,10 @@ func (dht *DHT) join() {
 	for _, addr := range dht.PrimeNodes {
 		raddr, err := net.ResolveUDPAddr(dht.Network, addr)
 		if err != nil {
+			fmt.Println("error: ", addr, err)
 			continue
 		}
+		// fmt.Println(addr)
 
 		// NOTE: Temporary node has NOT node id.
 		dht.transactionManager.findNode(
