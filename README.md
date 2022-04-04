@@ -1,12 +1,12 @@
 ![](https://raw.githubusercontent.com/hktalent/dht/master/dht.svg)
 
 ## what's the new
-- update all mod to new
-- update to go 1.18
-- and config.LocalNodeId
-- config.PrimeNodes add 3982 ips，Increase the speed of joining the DHT network
-- Rich annotations
-- Friendly UML diagram rendering
+- :white_check_mark: update all mod to new
+- :white_check_mark: update to go 1.18
+- :white_check_mark: and config.LocalNodeId
+- :white_check_mark: config.PrimeNodes add 3982 ips，Increase the speed of joining the DHT network
+- :white_check_mark: Rich annotations
+- :white_check_mark: Friendly UML diagram rendering
 
 ## Introduction
 
