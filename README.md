@@ -4,7 +4,7 @@
 - update all mod to new
 - update to go 1.18
 - and config.LocalNodeId
-- config.PrimeNodes add 3982 ips
+- config.PrimeNodes add 3982 ips，Increase the speed of joining the DHT network
 - Rich annotations
 - Friendly UML diagram rendering
 
@@ -72,9 +72,9 @@ You can download the demo compiled binary file [here](https://github.com/hktalen
 
 ## TODO
 
-- [ ] NAT Traversal.
-- [ ] Implements the full BEP-3.
-- [ ] Optimization.
+- :white_check_mark: NAT Traversal.
+- :white_check_mark: Implements the full BEP-3.
+- :white_check_mark: Optimization.
 
 ## FAQ
 
