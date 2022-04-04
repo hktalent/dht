@@ -1,10 +1,10 @@
 ![](https://raw.githubusercontent.com/hktalent/dht/master/dht.svg)
 
 ## what's the new
-- :white_check_mark: update all mod to new
+- :white_check_mark: update all depend mod to new
 - :white_check_mark: update to go 1.18
 - :white_check_mark: and config.LocalNodeId
-- :white_check_mark: config.PrimeNodes add 3982 ips，Increase the speed of joining the DHT network
+- :white_check_mark: config.PrimeNodes add 4275 DHT tracker server ips，now,fly in at high speed to DHT network
 - :white_check_mark: Rich annotations
 - :white_check_mark: Friendly UML diagram rendering
 

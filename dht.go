@@ -5,7 +5,6 @@ package dht
 import (
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"math"
 	"net"
 	"time"
@@ -252,7 +251,7 @@ func (dht *DHT) join() {
 	for _, addr := range dht.PrimeNodes {
 		raddr, err := net.ResolveUDPAddr(dht.Network, addr)
 		if err != nil {
-			fmt.Println("error: ", addr, err)
+			// fmt.Println("error: ", addr, err)
 			continue
 		}
 		// fmt.Println(addr)
