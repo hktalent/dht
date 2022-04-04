@@ -38,12 +38,10 @@ func newNode(id, network, address string) (*node, error) {
 	return &node{newBitmapFromString(id), addr, time.Now()}, nil
 }
 
-/*
-newNodeFromCompactInfo parses compactNodeInfo and returns a node pointer.
-compactNodeInfo 长度必须为26 byte
-前20 byte将拆分为id
-后6byte 将拆分为 ip & port
-*/
+// newNodeFromCompactInfo parses compactNodeInfo and returns a node pointer.
+// compactNodeInfo 长度必须为26 byte
+// 前20 byte将拆分为id
+// 后6byte 将拆分为 ip & port
 func newNodeFromCompactInfo(
 	compactNodeInfo string, network string) (*node, error) {
 

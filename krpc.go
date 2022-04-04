@@ -390,8 +390,10 @@ func (tm *transactionManager) announcePeer(
 	})
 }
 
-// ParseKey parses the key in dict data. `t` is type of the keyed value.
-// It's one of "int", "string", "map", "list".
+/*
+ParseKey parses the key in dict data. `t` is type of the keyed value.
+It's one of "int", "string", "map", "list".
+*/
 func ParseKey(data map[string]interface{}, key string, t string) error {
 	val, ok := data[key]
 	if !ok {
@@ -603,6 +605,12 @@ func handleRequest(dht *DHT, addr *net.UDPAddr,
 		if dht.OnAnnouncePeer != nil {
 			dht.OnAnnouncePeer(infoHash, addr.IP.String(), port)
 		}
+		// join 到新的匿名节点，加快自己的节点被发现的能力，加大自己节点的推广作用，2022-04-04 add
+		// 缺点是，这样可能会被其他节点列入黑名单
+		dht.transactionManager.findNode(
+			&node{addr: addr},
+			dht.node.id.RawString(),
+		)
 	default:
 		//		send(dht, addr, makeError(t, protocolError, "invalid q"))
 		return
@@ -613,9 +621,11 @@ func handleRequest(dht *DHT, addr *net.UDPAddr,
 	return true
 }
 
-// findOn puts nodes in the response to the routingTable, then if target is in
-// the nodes or all nodes are in the routingTable, it stops. Otherwise it
-// continues to findNode or getPeers.
+/*
+findOn puts nodes in the response to the routingTable, then if target is in
+the nodes or all nodes are in the routingTable, it stops. Otherwise it
+continues to findNode or getPeers.
+*/
 func findOn(dht *DHT, r map[string]interface{}, target *bitmap,
 	queryType string) error {
 
@@ -624,6 +634,7 @@ func findOn(dht *DHT, r map[string]interface{}, target *bitmap,
 	}
 
 	nodes := r["nodes"].(string)
+	// 长度必须是26的倍数
 	if len(nodes)%26 != 0 {
 		return errors.New("the length of nodes should can be divided by 26")
 	}
