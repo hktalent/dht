@@ -1,15 +1,12 @@
-![](https://raw.githubusercontent.com/hktalent/dht/master/doc/screen-shot.png)
-
-See the video on the [Youtube](https://www.youtube.com/watch?v=AIpeQtw22kc).
-
-[中文版README](https://github.com/hktalent/dht/blob/master/README_CN.md)
+![](https://raw.githubusercontent.com/hktalent/dht/master/dht.svg)
 
 ## what's the new
 - update all mod to new
 - update to go 1.18
 - and config.LocalNodeId
 - config.PrimeNodes add 3982 ips
-
+- Rich annotations
+- Friendly UML diagram rendering
 
 ## Introduction
 
