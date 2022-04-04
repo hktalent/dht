@@ -548,7 +548,9 @@ func (rt *routingTable) RemoveByAddr(address string) {
 	}
 }
 
-// Fresh sends findNode to all nodes in the expired nodes.
+/*
+Fresh sends findNode to all nodes in the expired nodes.
+*/
 func (rt *routingTable) Fresh() {
 	now := time.Now()
 

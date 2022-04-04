@@ -146,8 +146,13 @@ type DHT struct {
 	workerTokens       chan struct{}
 }
 
-// New returns a DHT pointer. If config is nil, then config will be set to
-// the default config.
+/*
+New returns a DHT pointer. If config is nil, then config will be set to
+the default config.
+注意：
+1、创建了一个随机id的节点
+workerTokens满了，数量等于 PacketWorkerLimit时，数据就丢弃
+*/
 func New(config *Config) *DHT {
 	if config == nil {
 		config = NewStandardConfig()
@@ -199,7 +204,14 @@ func (dht *DHT) IsCrawlMode() bool {
 	return dht.Mode == CrawlMode
 }
 
-// init initializes global varables.
+/*
+init initializes global varables.
+1、本地监听udp
+2、初始化路由表
+3、初始化peers管理器
+4、初始化token管理器
+5、初始化KRPC transaction管理器，运行，运行等于在定义的间隔时间内不停的query
+*/
 func (dht *DHT) init() {
 	listener, err := net.ListenPacket(dht.Network, dht.Address)
 	if err != nil {
@@ -218,7 +230,10 @@ func (dht *DHT) init() {
 	go dht.blackList.clear()
 }
 
-// join makes current node join the dht network.
+/*
+不断加入相邻、活跃、有效节点（加入DHT）
+join makes current node join the dht network.
+*/
 func (dht *DHT) join() {
 	for _, addr := range dht.PrimeNodes {
 		raddr, err := net.ResolveUDPAddr(dht.Network, addr)
@@ -234,7 +249,9 @@ func (dht *DHT) join() {
 	}
 }
 
-// listen receives message from udp.
+/*
+always from listen receives message from udp.
+*/
 func (dht *DHT) listen() {
 	go func() {
 		buff := make([]byte, 8192)
@@ -288,8 +305,12 @@ func (dht *DHT) AnnouncePeer(infoHash string) error {
 }
 
 /*
-GetPeers 向相邻节点发起 hash查询，所以，这种查询需要间隔时间不停查询，直到有结果
 GetPeers returns peers who have announced having infoHash.
+GetPeers 向相邻节点发起匿名 infohash查询
+注意：
+   1、这种查询使用时需要间隔时间不停查询，直到有结果
+   2、这里只是向当前内存路由表中临近的节点发起一次 get_peers 查询，没有查到是不管的
+
 */
 func (dht *DHT) GetPeers(infoHash string) error {
 	if !dht.Ready {
@@ -318,7 +339,14 @@ func (dht *DHT) GetPeers(infoHash string) error {
 	return nil
 }
 
-// Run starts the dht.
+/*
+Run starts the dht.
+1、初始化，监听
+2、并行异步不停息接收udp数据
+3、并行异步不停加入临近、活跃节点，也就是加入DHT网络
+4、路由表的时候，继续加入joinDHT网络
+5、transaction管理表 为空（size==0）的时候，刷新路由表生命周期
+*/
 func (dht *DHT) Run() {
 	dht.init()
 	dht.listen()

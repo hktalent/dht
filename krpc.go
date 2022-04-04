@@ -139,7 +139,10 @@ func makeError(t string, errCode int, errMsg string) map[string]interface{} {
 	}
 }
 
-// send sends data to the udp.
+/*
+send sends data to the udp.
+发送异常就将ip加入黑名单了，这优点鲁棒
+*/
 func send(dht *DHT, addr *net.UDPAddr, data map[string]interface{}) error {
 	dht.conn.SetWriteDeadline(time.Now().Add(time.Second * 15))
 
@@ -285,9 +288,12 @@ func (tm *transactionManager) filterOne(
 	return trans
 }
 
-// query sends the query-formed data to udp and wait for the response.
-// When timeout, it will retry `try - 1` times, which means it will query
-// `try` times totally.
+/*
+query sends the query-formed data to udp and wait for the response.
+When timeout, it will retry `try - 1` times, which means it will query
+`try` times totally.
+查询发生异常（失败）的节点就加入黑名单，并移出路由表
+*/
 func (tm *transactionManager) query(q *query, try int) {
 	transID := q.data["t"].(string)
 	trans := tm.newTransaction(transID, q)
@@ -654,7 +660,12 @@ func findOn(dht *DHT, r map[string]interface{}, target *bitmap,
 	return nil
 }
 
-// handleResponse handles responses received from udp.
+/*
+handleResponse handles responses received from udp.
+黑名单中的ip再次有数据到来
+   移出黑名单列表
+   加入路由表
+*/
 func handleResponse(dht *DHT, addr *net.UDPAddr,
 	response map[string]interface{}) (success bool) {
 
@@ -769,7 +780,10 @@ var handlers = map[string]func(*DHT, *net.UDPAddr, map[string]interface{}) bool{
 	"e": handleError,
 }
 
-// handle handles packets received from udp.
+/*
+handle handles packets received from udp.
+检查黑名单ip，黑名单ip数据直接跳过
+*/
 func handle(dht *DHT, pkt packet) {
 	if len(dht.workerTokens) == dht.PacketWorkerLimit {
 		return
