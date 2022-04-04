@@ -82,7 +82,21 @@ var (
 	g_nX        = 10
 )
 
-// NewStandardConfig returns a Config pointer with default values.
+/*
+NewStandardConfig returns a Config pointer with default values.
+default:
+	BlackListMaxSize:     65536
+	MaxTransactionCursor:math.MaxUint32
+	Address:    ":0"
+	Network:     "udp4",
+	K:           8,
+	KBucketSize: 8,
+	// 下面几个时间参数一般不要调整，是DHT协议的规范约束
+	KBucketExpiredAfter、NodeExpriedAfter：15分钟
+	CheckKBucketPeriod：30秒
+	TokenExpiredAfter：10分钟
+
+*/
 func NewStandardConfig() *Config {
 	return &Config{
 		LocalNodeId: LocalNodeId,
@@ -117,6 +131,7 @@ NewCrawlConfig returns a config in crawling mode.
 1、节点和kbucket有效期为0
 2、监测kbucket周期5秒
 3、当前node为空节点
+4、当前配置从 NewStandardConfig 获得模版后再进行修改的配置
 */
 func NewCrawlConfig() *Config {
 	config := NewStandardConfig()

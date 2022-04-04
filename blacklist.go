@@ -40,18 +40,19 @@ func (bl *blackList) genKey(ip string, port int) string {
 
 /*
 insert adds a blocked item to the blacklist.
-尝试不加黑名单，看看是否能提升速度
 */
 func (bl *blackList) insert(ip string, port int) {
-	// if bl.list.Len() >= bl.maxSize {
-	// 	return
-	// }
+	// 原来的代码这里是有问题的，超过预设maxSize就不处理了，返回了
+	// 实际上应该删除最老的一个，并加入新的
+	if bl.list.Len() >= bl.maxSize {
+		return
+	}
 
-	// bl.list.Set(bl.genKey(ip, port), &blockedItem{
-	// 	ip:         ip,
-	// 	port:       port,
-	// 	createTime: time.Now(),
-	// })
+	bl.list.Set(bl.genKey(ip, port), &blockedItem{
+		ip:         ip,
+		port:       port,
+		createTime: time.Now(),
+	})
 }
 
 // delete removes blocked item form the blackList.
