@@ -1,0 +1,316 @@
+@startuml
+namespace dht {
+    class Config << (S,Aquamarine) >> {
+        + LocalNodeId string
+        + K int
+        + KBucketSize int
+        + Network string
+        + Address string
+        + PrimeNodes []string
+        + KBucketExpiredAfter time.Duration
+        + NodeExpriedAfter time.Duration
+        + CheckKBucketPeriod time.Duration
+        + TokenExpiredAfter time.Duration
+        + MaxTransactionCursor uint64
+        + MaxNodes int
+        + OnGetPeers <font color=blue>func</font>(string, string, int) 
+        + OnGetPeersResponse <font color=blue>func</font>(string, *Peer) 
+        + OnAnnouncePeer <font color=blue>func</font>(string, string, int) 
+        + BlockedIPs []string
+        + BlackListMaxSize int
+        + Mode int
+        + Try int
+        + PacketJobLimit int
+        + PacketWorkerLimit int
+        + RefreshNodeNum int
+
+    }
+    class DHT << (S,Aquamarine) >> {
+        - node *node
+        - conn *net.UDPConn
+        - routingTable *routingTable
+        - transactionManager *transactionManager
+        - peersManager *peersManager
+        - tokenManager *tokenManager
+        - blackList *blackList
+        - packets <font color=blue>chan</font> packet
+        - workerTokens <font color=blue>chan</font> <font color=blue>struct</font>{}
+
+        + Ready bool
+
+        - init() 
+        - join() 
+        - listen() 
+        - id(target string) string
+
+        + IsStandardMode() bool
+        + IsCrawlMode() bool
+        + AnnouncePeer(infoHash string) error
+        + GetPeers(infoHash string) error
+        + Run() 
+
+    }
+    class Peer << (S,Aquamarine) >> {
+        - token string
+
+        + IP net.IP
+        + Port int
+
+        + CompactIPPortInfo() string
+
+    }
+    class Request << (S,Aquamarine) >> {
+        + InfoHash []byte
+        + IP string
+        + Port int
+
+    }
+    class Response << (S,Aquamarine) >> {
+        + MetadataInfo []byte
+
+    }
+    class Wire << (S,Aquamarine) >> {
+        - blackList *blackList
+        - queue *syncedMap
+        - requests <font color=blue>chan</font> Request
+        - responses <font color=blue>chan</font> Response
+        - workerTokens <font color=blue>chan</font> <font color=blue>struct</font>{}
+
+        - isDone(pieces [][]byte) bool
+        - requestPieces(conn *net.TCPConn, utMetadata int, metadataSize int, piecesNum int) 
+        - fetchMetadata(r Request) 
+
+        + Request(infoHash []byte, ip string, port int) 
+        + Response() <font color=blue>chan</font> Response
+        + Run() 
+
+    }
+    class bitmap << (S,Aquamarine) >> {
+        - data []byte
+
+        + Size int
+
+        - set(index int, bit int) 
+
+        + Bit(index int) int
+        + Set(index int) 
+        + Unset(index int) 
+        + Compare(other *bitmap, prefixLen int) int
+        + Xor(other *bitmap) *bitmap
+        + String() string
+        + RawString() string
+
+    }
+    class blackList << (S,Aquamarine) >> {
+        - list *syncedMap
+        - maxSize int
+        - expiredAfter time.Duration
+
+        - genKey(ip string, port int) string
+        - insert(ip string, port int) 
+        - delete(ip string, port int) 
+        - in(ip string, port int) bool
+        - clear() 
+
+    }
+    class blockedItem << (S,Aquamarine) >> {
+        - ip string
+        - port int
+        - createTime time.Time
+
+    }
+    class dht.topKHeap << (T, #FF7700) >>  {
+    }
+    class heapItem << (S,Aquamarine) >> {
+        - distance *bitmap
+        - value <font color=blue>interface</font>{}
+
+    }
+    class kbucket << (S,Aquamarine) >> {
+        - nodes *keyedDeque
+        - lastChanged time.Time
+        - prefix *bitmap
+
+        + LastChanged() time.Time
+        + RandomChildID() string
+        + UpdateTimestamp() 
+        + Insert(no *node) bool
+        + Replace(no *node) 
+        + Fresh(dht *DHT) 
+
+    }
+    class keyedDeque << (S,Aquamarine) >> {
+        - index <font color=blue>map</font>[<font color=blue>interface</font>{}]*list.Element
+        - invertedIndex <font color=blue>map</font>[*list.Element]<font color=blue>interface</font>{}
+
+        + Push(key <font color=blue>interface</font>{}, val <font color=blue>interface</font>{}) 
+        + Get(key <font color=blue>interface</font>{}) (*list.Element, bool)
+        + HasKey(key <font color=blue>interface</font>{}) bool
+        + Delete(key <font color=blue>interface</font>{}) <font color=blue>interface</font>{}
+        + Remove(e *list.Element) <font color=blue>interface</font>{}
+        + Clear() 
+
+    }
+    class mapItem << (S,Aquamarine) >> {
+        - key <font color=blue>interface</font>{}
+        - val <font color=blue>interface</font>{}
+
+    }
+    class node << (S,Aquamarine) >> {
+        - id *bitmap
+        - addr *net.UDPAddr
+        - lastActiveTime time.Time
+
+        + CompactIPPortInfo() string
+        + CompactNodeInfo() string
+
+    }
+    class packet << (S,Aquamarine) >> {
+        - data []byte
+        - raddr *net.UDPAddr
+
+    }
+    class peersManager << (S,Aquamarine) >> {
+        - table *syncedMap
+        - dht *DHT
+
+        + Insert(infoHash string, peer *Peer) 
+        + GetPeers(infoHash string, size int) []*Peer
+
+    }
+    class query << (S,Aquamarine) >> {
+        - node *node
+        - data <font color=blue>map</font>[string]<font color=blue>interface</font>{}
+
+    }
+    class routingTable << (S,Aquamarine) >> {
+        - k int
+        - root *routingTableNode
+        - cachedNodes *syncedMap
+        - cachedKBuckets *keyedDeque
+        - dht *DHT
+        - clearQueue *syncedList
+
+        + Insert(nd *node) bool
+        + GetNeighbors(id *bitmap, size int) []*node
+        + GetNeighborCompactInfos(id *bitmap, size int) []string
+        + GetNodeKBucktByID(id *bitmap) (*node, *kbucket)
+        + GetNodeByAddress(address string) (*node, bool)
+        + Remove(id *bitmap) 
+        + RemoveByAddr(address string) 
+        + Fresh() 
+        + Len() int
+
+    }
+    class routingTableNode << (S,Aquamarine) >> {
+        - children []*routingTableNode
+        - bucket *kbucket
+
+        + Child(index int) *routingTableNode
+        + SetChild(index int, c *routingTableNode) 
+        + KBucket() *kbucket
+        + SetKBucket(bucket *kbucket) 
+        + Split() 
+
+    }
+    class syncedList << (S,Aquamarine) >> {
+        - queue *list.List
+
+        + Front() *list.Element
+        + Back() *list.Element
+        + PushFront(v <font color=blue>interface</font>{}) *list.Element
+        + PushBack(v <font color=blue>interface</font>{}) *list.Element
+        + InsertBefore(v <font color=blue>interface</font>{}, mark *list.Element) *list.Element
+        + InsertAfter(v <font color=blue>interface</font>{}, mark *list.Element) *list.Element
+        + Remove(e *list.Element) <font color=blue>interface</font>{}
+        + Clear() 
+        + Len() int
+        + Iter() <font color=blue>chan</font> *list.Element
+
+    }
+    class syncedMap << (S,Aquamarine) >> {
+        - data <font color=blue>map</font>[<font color=blue>interface</font>{}]<font color=blue>interface</font>{}
+
+        + Get(key <font color=blue>interface</font>{}) (<font color=blue>interface</font>{}, bool)
+        + Has(key <font color=blue>interface</font>{}) bool
+        + Set(key <font color=blue>interface</font>{}, val <font color=blue>interface</font>{}) 
+        + Delete(key <font color=blue>interface</font>{}) 
+        + DeleteMulti(keys []<font color=blue>interface</font>{}) 
+        + Clear() 
+        + Iter() <font color=blue>chan</font> mapItem
+        + Len() int
+
+    }
+    class token << (S,Aquamarine) >> {
+        - data string
+        - createTime time.Time
+
+    }
+    class tokenManager << (S,Aquamarine) >> {
+        - expiredAfter time.Duration
+        - dht *DHT
+
+        - token(addr *net.UDPAddr) string
+        - clear() 
+        - check(addr *net.UDPAddr, tokenString string) bool
+
+    }
+    class topKHeap << (S,Aquamarine) >> {
+        + Len() int
+        + Less(i int, j int) bool
+        + Swap(i int, j int) 
+        + Push(x <font color=blue>interface</font>{}) 
+        + Pop() <font color=blue>interface</font>{}
+
+    }
+    class transaction << (S,Aquamarine) >> {
+        - id string
+        - response <font color=blue>chan</font> <font color=blue>struct</font>{}
+
+    }
+    class transactionManager << (S,Aquamarine) >> {
+        - transactions *syncedMap
+        - index *syncedMap
+        - cursor uint64
+        - maxCursor uint64
+        - queryChan <font color=blue>chan</font> *query
+        - dht *DHT
+
+        - genTransID() string
+        - newTransaction(id string, q *query) *transaction
+        - genIndexKey(queryType string, address string) string
+        - genIndexKeyByTrans(trans *transaction) string
+        - insert(trans *transaction) 
+        - delete(transID string) 
+        - len() int
+        - transaction(key string, keyType int) *transaction
+        - getByTransID(transID string) *transaction
+        - getByIndex(index string) *transaction
+        - filterOne(transID string, addr *net.UDPAddr) *transaction
+        - query(q *query, try int) 
+        - run() 
+        - sendQuery(no *node, queryType string, a <font color=blue>map</font>[string]<font color=blue>interface</font>{}) 
+        - ping(no *node) 
+        - findNode(no *node, target string) 
+        - getPeers(no *node, infoHash string) 
+        - announcePeer(no *node, infoHash string, impliedPort int, port int, token string) 
+
+    }
+}
+"dht.Config" *-- "dht.DHT"
+"dht.Request" *-- "dht.Response"
+"sync.RWMutex" *-- "dht.kbucket"
+"dht.syncedList" *-- "dht.keyedDeque"
+"sync.RWMutex" *-- "dht.keyedDeque"
+"sync.RWMutex" *-- "dht.peersManager"
+"sync.RWMutex" *-- "dht.routingTable"
+"sync.RWMutex" *-- "dht.routingTableNode"
+"sync.RWMutex" *-- "dht.syncedList"
+"sync.RWMutex" *-- "dht.syncedMap"
+"dht.syncedMap" *-- "dht.tokenManager"
+"dht.query" *-- "dht.transaction"
+"sync.RWMutex" *-- "dht.transactionManager"
+
+
+"dht.[]*heapItem" #.. "dht.topKHeap"
+@enduml
