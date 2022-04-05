@@ -45,8 +45,9 @@ func (bl *blackList) insert(ip string, port int) {
 	// 原来的代码这里是有问题的，超过预设maxSize就不处理了，返回了
 	// 实际上应该删除最老的一个，并加入新的
 	if bl.list.Len() >= bl.maxSize {
+		nS := bl.list.Len()
 		// 删除最老的一个节点
-		if !bl.deleteOldestOne() {
+		if !bl.deleteOldestOne() && nS == bl.list.Len() {
 			return
 		}
 	}
@@ -70,7 +71,7 @@ func (bl *blackList) deleteOldestOne() bool {
 
 	var k1 = ""
 	for item := range bl.list.Iter() {
-		if nN.Sub(item.val.(*blockedItem).createTime) < 0 {
+		if nN.Sub(item.val.(*blockedItem).createTime) > 0 {
 			nN = item.val.(*blockedItem).createTime
 			k1 = item.key.(string)
 		}

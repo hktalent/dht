@@ -331,7 +331,7 @@ func (tm *transactionManager) run() {
 	for {
 		select {
 		case q = <-tm.queryChan:
-			tm.query(q, tm.dht.Try)
+			go tm.query(q, tm.dht.Try)
 		}
 	}
 }
@@ -604,7 +604,7 @@ func handleRequest(dht *DHT, addr *net.UDPAddr,
 			}))
 		}
 
-		go dht.appendIps2DhtTracker(addr.String(), "")
+		dht.appendIps2DhtTracker(addr.String(), "")
 		if dht.OnAnnouncePeer != nil {
 			dht.OnAnnouncePeer(infoHash, addr.IP.String(), port)
 		}
