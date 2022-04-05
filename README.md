@@ -4,7 +4,7 @@
 - :white_check_mark: update all depend mod to new
 - :white_check_mark: update to go 1.18
 - :white_check_mark: and config.LocalNodeId
-- :white_check_mark: config.PrimeNodes add 19523 DHT tracker server ips，now,fly in at high speed to DHT network
+- :white_check_mark: 45371 DHT tracker server ips，now,fly in at high speed to DHT network
 - :white_check_mark: Rich annotations
 - :white_check_mark: Friendly UML diagram rendering
 - :white_check_mark: 优化、解决中国无法连接DHT Tracker的bug(Optimize and solve the bug that China cannot connect to DHT tracker)

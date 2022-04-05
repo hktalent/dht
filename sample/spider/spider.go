@@ -144,6 +144,7 @@ func getMyPeer(d *dht.DHT) {
 	}
 }
 
+// ./spider -resUrl="http://127.0.0.1:9200/dht_index/_doc/" -address=":0"
 func main() {
 	address = flag.String("address", ":6881", ":6881")
 	resUrl = flag.String("resUrl", "", "Elasticsearch url, eg: http://127.0.0.1:9200/dht_index/_doc/")
@@ -153,9 +154,11 @@ func main() {
 	}
 	flag.Parse()
 
-	// go func() {
-	// 	http.ListenAndServe(":6060", nil)
-	// }()
+	// debug info
+	// http://127.0.0.1:6060/debug/pprof/
+	go func() {
+		http.ListenAndServe(":6060", nil)
+	}()
 
 	nX := 10
 	// blackListSize, requestQueueSize, workerQueueSize
@@ -216,6 +219,7 @@ func main() {
 		fmt.Println("OnAnnouncePeer ", infoHash, " ", ip)
 		w.Request([]byte(infoHash), ip, port)
 	}
+	fmt.Println("DHT tracer servers lists length : ", len(config.PrimeNodes))
 	d := dht.New(config)
 	// d.Mode = &dht.newNode(myPeerId, "", config.Address)
 	d.OnGetPeersResponse = func(infoHash string, peer *dht.Peer) {

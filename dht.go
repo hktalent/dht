@@ -19,6 +19,7 @@ const (
 	StandardMode = iota
 	// CrawlMode for crawling the dht network.值为1
 	CrawlMode
+	bCloseRcdIps = true
 )
 
 var (
@@ -230,9 +231,18 @@ init initializes global varables.
 5、初始化KRPC transaction管理器，运行，运行等于在定义的间隔时间内不停的query
 */
 func (dht *DHT) init() {
-	// dht.Config.PrimeNodes = sort.StringSlice(dht.Config.PrimeNodes)
-	// sort.Sort(sort.StringSlice(dht.Config.PrimeNodes))
-	// dht.Config.PrimeNodes = sort.StringSlice(dht.Config.PrimeNodes)
+	// 下面的注释打开后，内存开销过大
+	nLen := len(dht.Config.PrimeNodes)
+	if nLen > dht.Config.PacketWorkerLimit {
+		dht.Config.PacketWorkerLimit = nLen + 8
+	}
+	if nLen > dht.Config.PacketJobLimit {
+		dht.Config.PacketJobLimit = nLen + 8
+	}
+	if nLen > dht.Config.BlackListMaxSize {
+		dht.Config.BlackListMaxSize = nLen + 8
+	}
+
 	listener, err := net.ListenPacket(dht.Network, dht.Address)
 	if err != nil {
 		panic(err)
@@ -272,16 +282,21 @@ func SliceIndex(element string, data []string) int {
 
 // 记录更多DHT Tracker ip:port 为下一版本提供更多加速的动力
 func (dht *DHT) appendIps2DhtTracker(s string, fileName string) {
+	if bCloseRcdIps {
+		return
+	}
+	var n = -1
 	if "" == fileName {
 		fileName = "/ips.txt"
+		n = SliceIndex(s, dht.Config.PrimeNodes)
 	}
 	dirname, err := os.UserHomeDir()
 	if err != nil {
 		return
 	}
-	n := SliceIndex(s, dht.Config.PrimeNodes)
+	// n = SliceIndex(s, dht.Config.PrimeNodes)
 	// fmt.Println(n, " ", s)
-	if -1 == n {
+	if -1 == n || fileName != "/ips.txt" {
 		szNmae := dirname + fileName
 		// fmt.Println("appendIps2DhtTracker ", szNmae, " start ")
 		dht.Config.PrimeNodes = append(dht.Config.PrimeNodes, s)
@@ -302,28 +317,37 @@ join makes current node join the dht network.
 */
 func (dht *DHT) join() {
 	wg := &sync.WaitGroup{}
+	// 限制 4096 个并发
+	ch := make(chan struct{}, dht.Config.PacketJobLimit)
 	// fmt.Println(len(dht.PrimeNodes))
 	// s1 := strconv.Itoa(len(dht.PrimeNodes))
 	for _, addr := range dht.PrimeNodes {
 		wg.Add(1)
+		ch <- struct{}{}
 		go func(addr string) {
-			defer wg.Done()
+			defer func() {
+				wg.Done()
+				<-ch
+
+			}()
 			raddr, err := net.ResolveUDPAddr(dht.Network, addr)
-			if err != nil {
-				// fmt.Println("error: ", addr, err)
-				return
-			}
-			// dht.appendIps2DhtTracker(raddr.String(), "/chinaOk.txt")
-			// if ok, _ := regexp.Match(`^[0-9\.:]+$`, []byte(addr)); ok {
-			// 	fmt.Println(addr)
-			// } else {
-			// 	getIps(addr)
+			// if err != nil {
+			// 	// fmt.Println("error: ", addr, err)
+			// 	return
 			// }
-			// NOTE: Temporary node has NOT node id.
-			dht.transactionManager.findNode(
-				&node{addr: raddr},
-				dht.node.id.RawString(),
-			)
+			if err == nil {
+				// go dht.appendIps2DhtTracker(raddr.String(), "/chinaOk.txt")
+				// if ok, _ := regexp.Match(`^[0-9\.:]+$`, []byte(addr)); ok {
+				// fmt.Println(addr)
+				// } else {
+				// 	getIps(addr)
+				// }
+				// NOTE: Temporary node has NOT node id.
+				dht.transactionManager.findNode(
+					&node{addr: raddr},
+					dht.node.id.RawString(),
+				)
+			}
 		}(addr)
 	}
 	wg.Wait()
@@ -337,11 +361,9 @@ func (dht *DHT) listen() {
 		buff := make([]byte, 8192)
 		for {
 			n, raddr, err := dht.conn.ReadFromUDP(buff)
-			if err != nil {
-				continue
+			if err == nil {
+				dht.packets <- packet{buff[:n], raddr}
 			}
-
-			dht.packets <- packet{buff[:n], raddr}
 		}
 	}()
 }

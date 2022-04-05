@@ -45,7 +45,10 @@ func (bl *blackList) insert(ip string, port int) {
 	// 原来的代码这里是有问题的，超过预设maxSize就不处理了，返回了
 	// 实际上应该删除最老的一个，并加入新的
 	if bl.list.Len() >= bl.maxSize {
-		return
+		// 删除最老的一个节点
+		if !bl.deleteOldestOne() {
+			return
+		}
 	}
 
 	// fmt.Println("black ", ip, ":", port)
@@ -59,6 +62,25 @@ func (bl *blackList) insert(ip string, port int) {
 // delete removes blocked item form the blackList.
 func (bl *blackList) delete(ip string, port int) {
 	bl.list.Delete(bl.genKey(ip, port))
+}
+
+// validate checks whether ip-port pair is in the block nodes list.
+func (bl *blackList) deleteOldestOne() bool {
+	nN := time.Now()
+
+	var k1 = ""
+	for item := range bl.list.Iter() {
+		if nN.Sub(item.val.(*blockedItem).createTime) < 0 {
+			nN = item.val.(*blockedItem).createTime
+			k1 = item.key.(string)
+		}
+	}
+	if "" != k1 {
+		bl.list.Delete(k1)
+		return true
+	}
+
+	return false
 }
 
 // validate checks whether ip-port pair is in the block nodes list.

@@ -2,6 +2,7 @@ package dht
 
 import (
 	"errors"
+	"log"
 	"net"
 	"strings"
 	"sync"
@@ -304,6 +305,7 @@ func (tm *transactionManager) query(q *query, try int) {
 	success := false
 	for i := 0; i < try; i++ {
 		if err := send(tm.dht, q.node.addr, q.data); err != nil {
+			log.Println(q.node.addr, err)
 			break
 		}
 
@@ -315,7 +317,7 @@ func (tm *transactionManager) query(q *query, try int) {
 			// case <-time.After(time.Second * 2):
 		}
 	}
-	// 初始化时，还没有ready，就先不考虑黑名单问题
+	// 初始化时，还没有ready，就先不考虑黑名单问题，性能考虑，去掉条件：tm.dht.Ready &&
 	if tm.dht.Ready && !success && q.node.id != nil {
 		tm.dht.blackList.insert(q.node.addr.IP.String(), q.node.addr.Port)
 		tm.dht.routingTable.RemoveByAddr(q.node.addr.String())
@@ -329,7 +331,7 @@ func (tm *transactionManager) run() {
 	for {
 		select {
 		case q = <-tm.queryChan:
-			go tm.query(q, tm.dht.Try)
+			tm.query(q, tm.dht.Try)
 		}
 	}
 }
@@ -608,10 +610,10 @@ func handleRequest(dht *DHT, addr *net.UDPAddr,
 		}
 		// join 到新的匿名节点，加快自己的节点被发现的能力，加大自己节点的推广作用，2022-04-04 add
 		// 缺点是，这样可能会被其他节点列入黑名单
-		go dht.transactionManager.findNode(
-			&node{addr: addr},
-			dht.node.id.RawString(),
-		)
+		// go dht.transactionManager.findNode(
+		// 	&node{addr: addr},
+		// 	dht.node.id.RawString(),
+		// )
 	default:
 		//		send(dht, addr, makeError(t, protocolError, "invalid q"))
 		return
