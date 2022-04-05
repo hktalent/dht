@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math"
 	"net"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -229,6 +230,9 @@ init initializes global varables.
 5、初始化KRPC transaction管理器，运行，运行等于在定义的间隔时间内不停的query
 */
 func (dht *DHT) init() {
+	// dht.Config.PrimeNodes = sort.StringSlice(dht.Config.PrimeNodes)
+	// sort.Sort(sort.StringSlice(dht.Config.PrimeNodes))
+	// dht.Config.PrimeNodes = sort.StringSlice(dht.Config.PrimeNodes)
 	listener, err := net.ListenPacket(dht.Network, dht.Address)
 	if err != nil {
 		panic(err)
@@ -257,12 +261,48 @@ func getIps(domain string) {
 	}
 }
 
+func SliceIndex(element string, data []string) int {
+	for k, v := range data {
+		if element == v {
+			return k
+		}
+	}
+	return -1
+}
+
+// 记录更多DHT Tracker ip:port 为下一版本提供更多加速的动力
+func (dht *DHT) appendIps2DhtTracker(s string, fileName string) {
+	if "" == fileName {
+		fileName = "/ips.txt"
+	}
+	dirname, err := os.UserHomeDir()
+	if err != nil {
+		return
+	}
+	n := SliceIndex(s, dht.Config.PrimeNodes)
+	// fmt.Println(n, " ", s)
+	if -1 == n {
+		szNmae := dirname + fileName
+		// fmt.Println("appendIps2DhtTracker ", szNmae, " start ")
+		dht.Config.PrimeNodes = append(dht.Config.PrimeNodes, s)
+		file, err := os.OpenFile(szNmae, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+		if err != nil {
+			// fmt.Println(err)
+			return
+		}
+		defer file.Close()
+		file.Write([]byte(s + "\n"))
+		// fmt.Println("appendIps2DhtTracker ", szNmae, " ", s, n)
+	}
+}
+
 /*
 不断加入相邻、活跃、有效节点（加入DHT）
 join makes current node join the dht network.
 */
 func (dht *DHT) join() {
 	wg := &sync.WaitGroup{}
+	// fmt.Println(len(dht.PrimeNodes))
 	// s1 := strconv.Itoa(len(dht.PrimeNodes))
 	for _, addr := range dht.PrimeNodes {
 		wg.Add(1)
@@ -270,9 +310,10 @@ func (dht *DHT) join() {
 			defer wg.Done()
 			raddr, err := net.ResolveUDPAddr(dht.Network, addr)
 			if err != nil {
-				fmt.Println("error: ", addr, err)
+				// fmt.Println("error: ", addr, err)
 				return
 			}
+			// dht.appendIps2DhtTracker(raddr.String(), "/chinaOk.txt")
 			// if ok, _ := regexp.Match(`^[0-9\.:]+$`, []byte(addr)); ok {
 			// 	fmt.Println(addr)
 			// } else {

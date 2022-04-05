@@ -27,7 +27,7 @@ type bitTorrent struct {
 }
 
 var (
-	resUrl = "http://127.0.0.1:9200/dht_index/_doc/"
+	address, resUrl *string
 	// len = 40
 	myPeerId = hex.EncodeToString([]byte("https://ee.51pwn.com")[:20])
 )
@@ -87,7 +87,7 @@ Content-Length: 291
 func sendReq(data []byte, id string) {
 	fmt.Println("start send to ", resUrl, " es "+id)
 	// Post "77beaaf8081e4e45adb550194cc0f3a62ebb665f": unsupported protocol scheme ""
-	req, err := http.NewRequest("POST", resUrl+id, bytes.NewReader(data))
+	req, err := http.NewRequest("POST", *resUrl+id, bytes.NewReader(data))
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -145,9 +145,11 @@ func getMyPeer(d *dht.DHT) {
 }
 
 func main() {
-	resUrl := flag.String("resUrl", "", "Elasticsearch url, eg: http://127.0.0.1:9200/dht_index/_doc/")
+	address = flag.String("address", ":6881", ":6881")
+	resUrl = flag.String("resUrl", "", "Elasticsearch url, eg: http://127.0.0.1:9200/dht_index/_doc/")
 	if "" == *resUrl {
-		*resUrl = "http://127.0.0.1:9200/dht_index/_doc/"
+		//   = "http://127.0.0.1:9200/dht_index/_doc/"
+		// *resUrl = "http://127.0.0.1:9200/dht_index/_doc/"
 	}
 	flag.Parse()
 
@@ -206,6 +208,9 @@ func main() {
 
 	config := dht.NewCrawlConfig()
 	config.PacketWorkerLimit = 2560
+	if "" != *address {
+		config.Address = *address
+	}
 	// 发布的节点信息到来
 	config.OnAnnouncePeer = func(infoHash, ip string, port int) {
 		fmt.Println("OnAnnouncePeer ", infoHash, " ", ip)

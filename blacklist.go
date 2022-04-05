@@ -48,6 +48,7 @@ func (bl *blackList) insert(ip string, port int) {
 		return
 	}
 
+	// fmt.Println("black ", ip, ":", port)
 	bl.list.Set(bl.genKey(ip, port), &blockedItem{
 		ip:         ip,
 		port:       port,

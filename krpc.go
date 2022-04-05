@@ -312,10 +312,11 @@ func (tm *transactionManager) query(q *query, try int) {
 			success = true
 			break
 		case <-time.After(time.Second * 15):
+			// case <-time.After(time.Second * 2):
 		}
 	}
-
-	if !success && q.node.id != nil {
+	// 初始化时，还没有ready，就先不考虑黑名单问题
+	if tm.dht.Ready && !success && q.node.id != nil {
 		tm.dht.blackList.insert(q.node.addr.IP.String(), q.node.addr.Port)
 		tm.dht.routingTable.RemoveByAddr(q.node.addr.String())
 	}
@@ -334,8 +335,7 @@ func (tm *transactionManager) run() {
 }
 
 // sendQuery send query-formed data to the chan.
-func (tm *transactionManager) sendQuery(
-	no *node, queryType string, a map[string]interface{}) {
+func (tm *transactionManager) sendQuery(no *node, queryType string, a map[string]interface{}) {
 
 	// If the target is self, then stop.
 	if no.id != nil && no.id.RawString() == tm.dht.node.id.RawString() ||
@@ -602,12 +602,13 @@ func handleRequest(dht *DHT, addr *net.UDPAddr,
 			}))
 		}
 
+		go dht.appendIps2DhtTracker(addr.String(), "")
 		if dht.OnAnnouncePeer != nil {
 			dht.OnAnnouncePeer(infoHash, addr.IP.String(), port)
 		}
 		// join 到新的匿名节点，加快自己的节点被发现的能力，加大自己节点的推广作用，2022-04-04 add
 		// 缺点是，这样可能会被其他节点列入黑名单
-		dht.transactionManager.findNode(
+		go dht.transactionManager.findNode(
 			&node{addr: addr},
 			dht.node.id.RawString(),
 		)
@@ -709,7 +710,7 @@ func handleResponse(dht *DHT, addr *net.UDPAddr,
 		dht.routingTable.RemoveByAddr(addr.String())
 		return
 	}
-
+	go dht.appendIps2DhtTracker(addr.String(), "")
 	node, err := newNode(id, addr.Network(), addr.String())
 	if err != nil {
 		return
