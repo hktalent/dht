@@ -5,8 +5,11 @@ package dht
 import (
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"math"
 	"net"
+	"strings"
+	"sync"
 	"time"
 )
 
@@ -243,25 +246,46 @@ func (dht *DHT) init() {
 	go dht.blackList.clear()
 }
 
+func getIps(domain string) {
+	a := strings.Split(domain, ":")
+	ips, _ := net.LookupIP(a[0])
+	for _, ip := range ips {
+		if ipv4 := ip.To4(); ipv4 != nil {
+			fmt.Printf("%v:%s\n", ipv4, a[1])
+			// fmt.Println(string(ipv4) + ":" + a[1])
+		}
+	}
+}
+
 /*
 不断加入相邻、活跃、有效节点（加入DHT）
 join makes current node join the dht network.
 */
 func (dht *DHT) join() {
+	wg := &sync.WaitGroup{}
+	// s1 := strconv.Itoa(len(dht.PrimeNodes))
 	for _, addr := range dht.PrimeNodes {
-		raddr, err := net.ResolveUDPAddr(dht.Network, addr)
-		if err != nil {
-			// fmt.Println("error: ", addr, err)
-			continue
-		}
-		// fmt.Println(addr)
-
-		// NOTE: Temporary node has NOT node id.
-		dht.transactionManager.findNode(
-			&node{addr: raddr},
-			dht.node.id.RawString(),
-		)
+		wg.Add(1)
+		go func(addr string) {
+			defer wg.Done()
+			raddr, err := net.ResolveUDPAddr(dht.Network, addr)
+			if err != nil {
+				fmt.Println("error: ", addr, err)
+				return
+			}
+			// if ok, _ := regexp.Match(`^[0-9\.:]+$`, []byte(addr)); ok {
+			// 	fmt.Println(addr)
+			// } else {
+			// 	getIps(addr)
+			// }
+			// NOTE: Temporary node has NOT node id.
+			dht.transactionManager.findNode(
+				&node{addr: raddr},
+				dht.node.id.RawString(),
+			)
+		}(addr)
 	}
+	wg.Wait()
 }
 
 /*
@@ -364,6 +388,7 @@ Run starts the dht.
 */
 func (dht *DHT) Run() {
 	dht.init()
+
 	dht.listen()
 	dht.join()
 
