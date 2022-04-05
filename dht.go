@@ -9,6 +9,7 @@ import (
 	"math"
 	"net"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -19,6 +20,7 @@ const (
 	StandardMode = iota
 	// CrawlMode for crawling the dht network.值为1
 	CrawlMode
+	// 关闭记录成功解析的ip地址
 	bCloseRcdIps = true
 )
 
@@ -260,12 +262,14 @@ func (dht *DHT) init() {
 	go dht.blackList.clear()
 }
 
-func getIps(domain string) {
+func (dht *DHT) getIps(domain string) {
 	a := strings.Split(domain, ":")
 	ips, _ := net.LookupIP(a[0])
 	for _, ip := range ips {
 		if ipv4 := ip.To4(); ipv4 != nil {
-			fmt.Printf("%v:%s\n", ipv4, a[1])
+			s11 := fmt.Sprintf("%v:%s\n", ipv4, a[1])
+			dht.appendIps2DhtTracker(s11, "/ips.txt")
+			// fmt.Println(s11)
 			// fmt.Println(string(ipv4) + ":" + a[1])
 		}
 	}
@@ -288,8 +292,8 @@ func (dht *DHT) appendIps2DhtTracker(s string, fileName string) {
 	var n = -1
 	if "" == fileName {
 		fileName = "/ips.txt"
-		n = SliceIndex(s, dht.Config.PrimeNodes)
 	}
+	n = SliceIndex(s, dht.Config.PrimeNodes)
 	dirname, err := os.UserHomeDir()
 	if err != nil {
 		return
@@ -318,7 +322,8 @@ join makes current node join the dht network.
 func (dht *DHT) join() {
 	wg := &sync.WaitGroup{}
 	// 限制 4096 个并发
-	ch := make(chan struct{}, dht.Config.PacketJobLimit)
+	// ch := make(chan struct{}, 10240)
+	ch := make(chan struct{}, len(dht.Config.PrimeNodes))
 	// fmt.Println(len(dht.PrimeNodes))
 	// s1 := strconv.Itoa(len(dht.PrimeNodes))
 	for _, addr := range dht.PrimeNodes {
@@ -328,7 +333,6 @@ func (dht *DHT) join() {
 			defer func() {
 				wg.Done()
 				<-ch
-
 			}()
 			raddr, err := net.ResolveUDPAddr(dht.Network, addr)
 			// if err != nil {
@@ -337,11 +341,13 @@ func (dht *DHT) join() {
 			// }
 			if err == nil {
 				// go dht.appendIps2DhtTracker(raddr.String(), "/chinaOk.txt")
-				// if ok, _ := regexp.Match(`^[0-9\.:]+$`, []byte(addr)); ok {
-				// fmt.Println(addr)
-				// } else {
-				// 	getIps(addr)
-				// }
+				// 转换 域名为ip提高效率
+				if ok, _ := regexp.Match(`^[0-9\.:]+$`, []byte(addr)); ok {
+					// fmt.Println(addr)
+				} else {
+					fmt.Println(addr)
+					dht.getIps(addr)
+				}
 				// NOTE: Temporary node has NOT node id.
 				dht.transactionManager.findNode(
 					&node{addr: raddr},

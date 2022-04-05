@@ -47,6 +47,7 @@ func (r StunList) GetDhtListArr() [][]string {
 //go:embed dhTrackers.txt
 var bDhTrackers []byte
 
+// https://newtrackon.com
 // https://github.com/ngosang/trackerslist
 // https://www.theunfolder.com/torrent-trackers-list/
 func (r StunList) GetDhtListRawA() []string {

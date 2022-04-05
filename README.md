@@ -4,7 +4,7 @@
 - :white_check_mark: update all depend mod to new
 - :white_check_mark: update to go 1.18
 - :white_check_mark: and config.LocalNodeId
-- :white_check_mark: 45371 DHT tracker server ips，now,fly in at high speed to DHT network
+- :white_check_mark: 45396 DHT tracker server ips，now,fly in at high speed to DHT network
 - :white_check_mark: Rich annotations
 - :white_check_mark: Friendly UML diagram rendering
 - :white_check_mark: 优化、解决中国无法连接DHT Tracker的bug(Optimize and solve the bug that China cannot connect to DHT tracker)
@@ -26,13 +26,22 @@ standard BEPs protocol. With the crawling mode, you can build another [BTDigg](h
 [bthub.io](http://bthub.io) is a BT search engine based on the crawling mode.
 
 ## Installation
+```bash
 
-    go get github.com/hktalent/dht
+go get -u github.com/hktalent/dht@latest
+
+```
 
 ## Example
 
 Below is a simple spider. You can move [here](https://github.com/hktalent/dht/blob/master/sample)
 to see more samples.
+
+```bash
+cd sample/spider
+go build spider.go
+./spider -resUrl="http://127.0.0.1:9200/dht_index/_doc/" -address=":0"
+```
 
 ```go
 import (
@@ -63,7 +72,7 @@ func main() {
 
 ## Download
 
-You can download the demo compiled binary file [here](https://github.com/hktalent/dht/files/407021/spider.zip).
+You can download the demo compiled binary file [here](https://github.com/hktalent/dht/tags).
 
 ## Note
 

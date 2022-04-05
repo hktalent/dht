@@ -146,7 +146,7 @@ func getMyPeer(d *dht.DHT) {
 
 // ./spider -resUrl="http://127.0.0.1:9200/dht_index/_doc/" -address=":0"
 func main() {
-	address = flag.String("address", ":6881", ":6881")
+	address = flag.String("address", ":6881", "random port :0")
 	resUrl = flag.String("resUrl", "", "Elasticsearch url, eg: http://127.0.0.1:9200/dht_index/_doc/")
 	if "" == *resUrl {
 		//   = "http://127.0.0.1:9200/dht_index/_doc/"
@@ -154,9 +154,8 @@ func main() {
 	}
 	flag.Parse()
 
-	// debug info
-	// http://127.0.0.1:6060/debug/pprof/
 	go func() {
+		fmt.Println("debug info: \nopen http://127.0.0.1:6060/debug/pprof/\n")
 		http.ListenAndServe(":6060", nil)
 	}()
 
@@ -227,7 +226,7 @@ func main() {
 			fmt.Printf("my private net: <%s:%d>\n", peer.IP, peer.Port)
 		} else if 0 < len(*resUrl) {
 			// sendReq([]byte(fmt.Sprintf("{\"ip\":\"%s\",\"port\":%d,\"type\":\"peer\"}", peer.IP, peer.Port)), fmt.Sprintf("%s_%d", peer.IP, peer.Port))
-			fmt.Printf("OnGetPeersResponse peer info : %s:%d\n", peer.IP, peer.Port)
+			fmt.Printf("OnGetPeersResponse peer info : %s:%d\n", peer.IP.String(), peer.Port)
 		}
 	}
 	// go getMyPeer(d)
