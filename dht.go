@@ -84,7 +84,7 @@ type Config struct {
 
 var (
 	LocalNodeId = hex.EncodeToString([]byte("https://ee.51pwn.com"))[:20]
-	g_nX        = 10
+	g_nX        = 1
 )
 
 /*
@@ -234,16 +234,16 @@ init initializes global varables.
 */
 func (dht *DHT) init() {
 	// 下面的注释打开后，内存开销过大
-	nLen := len(dht.Config.PrimeNodes)
-	if nLen > dht.Config.PacketWorkerLimit {
-		dht.Config.PacketWorkerLimit = nLen + 8
-	}
-	if nLen > dht.Config.PacketJobLimit {
-		dht.Config.PacketJobLimit = nLen + 8
-	}
-	if nLen > dht.Config.BlackListMaxSize {
-		dht.Config.BlackListMaxSize = nLen + 8
-	}
+	// nLen := len(dht.Config.PrimeNodes)
+	// if nLen > dht.Config.PacketWorkerLimit {
+	// 	dht.Config.PacketWorkerLimit = nLen + 8
+	// }
+	// if nLen > dht.Config.PacketJobLimit {
+	// 	dht.Config.PacketJobLimit = nLen + 8
+	// }
+	// if nLen > dht.Config.BlackListMaxSize {
+	// 	dht.Config.BlackListMaxSize = nLen + 8
+	// }
 
 	listener, err := net.ListenPacket(dht.Network, dht.Address)
 	if err != nil {
@@ -322,7 +322,7 @@ join makes current node join the dht network.
 func (dht *DHT) join() {
 	wg := &sync.WaitGroup{}
 	// 限制 4096 个并发
-	ch := make(chan struct{}, 4096)
+	ch := make(chan struct{}, 16)
 	// ch := make(chan struct{}, len(dht.Config.PrimeNodes))
 	// fmt.Println(len(dht.PrimeNodes))
 	// s1 := strconv.Itoa(len(dht.PrimeNodes))
