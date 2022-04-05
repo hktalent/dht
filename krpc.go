@@ -318,7 +318,7 @@ func (tm *transactionManager) query(q *query, try int) {
 		}
 	}
 	// 初始化时，还没有ready，就先不考虑黑名单问题，性能考虑，去掉条件：tm.dht.Ready &&
-	if tm.dht.Ready && !success && q.node.id != nil {
+	if !success && q.node.id != nil {
 		tm.dht.blackList.insert(q.node.addr.IP.String(), q.node.addr.Port)
 		tm.dht.routingTable.RemoveByAddr(q.node.addr.String())
 	}

@@ -215,8 +215,9 @@ func main() {
 	}
 	// 发布的节点信息到来
 	config.OnAnnouncePeer = func(infoHash, ip string, port int) {
-		fmt.Println("OnAnnouncePeer ", infoHash, " ", ip)
 		w.Request([]byte(infoHash), ip, port)
+		// sendReq([]byte(fmt.Sprintf("{\"ip\":\"%s\",\"port\":%d,\"type\":\"peer\"}", ip, port)), fmt.Sprintf("%s_%d", ip, port))
+		fmt.Printf("OnAnnouncePeerinfo : %s:%d\n", ip, port)
 	}
 	fmt.Println("DHT tracer servers lists length : ", len(config.PrimeNodes))
 	d := dht.New(config)
@@ -226,7 +227,7 @@ func main() {
 			fmt.Printf("my private net: <%s:%d>\n", peer.IP, peer.Port)
 		} else if 0 < len(*resUrl) {
 			// sendReq([]byte(fmt.Sprintf("{\"ip\":\"%s\",\"port\":%d,\"type\":\"peer\"}", peer.IP, peer.Port)), fmt.Sprintf("%s_%d", peer.IP, peer.Port))
-			fmt.Printf("OnGetPeersResponse peer info : %s:%d\n", peer.IP.String(), peer.Port)
+			fmt.Printf("OnGetPeersResponse peer info : %v:%d\n", peer.IP.String(), peer.Port)
 		}
 	}
 	// go getMyPeer(d)

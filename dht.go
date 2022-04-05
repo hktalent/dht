@@ -322,7 +322,7 @@ join makes current node join the dht network.
 func (dht *DHT) join() {
 	wg := &sync.WaitGroup{}
 	// 限制 4096 个并发
-	ch := make(chan struct{}, 10240)
+	ch := make(chan struct{}, 4096)
 	// ch := make(chan struct{}, len(dht.Config.PrimeNodes))
 	// fmt.Println(len(dht.PrimeNodes))
 	// s1 := strconv.Itoa(len(dht.PrimeNodes))
