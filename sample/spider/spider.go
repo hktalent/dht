@@ -85,7 +85,7 @@ Content-Length: 291
 }
 */
 func sendReq(data []byte, id string) {
-	fmt.Println("start send to ", resUrl, " es "+id)
+	fmt.Println("start send to ", *resUrl, " es "+id)
 	// Post "77beaaf8081e4e45adb550194cc0f3a62ebb665f": unsupported protocol scheme ""
 	req, err := http.NewRequest("POST", *resUrl+id, bytes.NewReader(data))
 	if err != nil {
@@ -231,6 +231,6 @@ func main() {
 		}
 	}
 	// go getMyPeer(d)
-	fmt.Println("start run ...")
+	fmt.Println("start run, wait for 1 ~ 2 minute ...")
 	d.Run()
 }

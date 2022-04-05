@@ -2,7 +2,6 @@ package dht
 
 import (
 	"errors"
-	"log"
 	"net"
 	"strings"
 	"sync"
@@ -305,7 +304,7 @@ func (tm *transactionManager) query(q *query, try int) {
 	success := false
 	for i := 0; i < try; i++ {
 		if err := send(tm.dht, q.node.addr, q.data); err != nil {
-			log.Println(q.node.addr, err)
+			// log.Println(q.node.addr, err)
 			break
 		}
 
@@ -611,10 +610,10 @@ func handleRequest(dht *DHT, addr *net.UDPAddr,
 		}
 		// join 到新的匿名节点，加快自己的节点被发现的能力，加大自己节点的推广作用，2022-04-04 add
 		// 缺点是，这样可能会被其他节点列入黑名单
-		dht.transactionManager.findNode(
-			&node{addr: addr},
-			dht.node.id.RawString(),
-		)
+		// dht.transactionManager.findNode(
+		// 	&node{addr: addr},
+		// 	dht.node.id.RawString(),
+		// )
 	default:
 		//		send(dht, addr, makeError(t, protocolError, "invalid q"))
 		return
