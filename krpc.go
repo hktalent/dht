@@ -331,6 +331,7 @@ func (tm *transactionManager) run() {
 	for {
 		select {
 		case q = <-tm.queryChan:
+			// 这里必须异步： go，否则全部堵塞无法运行
 			go tm.query(q, tm.dht.Try)
 		}
 	}
@@ -604,7 +605,7 @@ func handleRequest(dht *DHT, addr *net.UDPAddr,
 			}))
 		}
 
-		dht.appendIps2DhtTracker(addr.String(), "")
+		go dht.appendIps2DhtTracker(addr.String(), "")
 		if dht.OnAnnouncePeer != nil {
 			dht.OnAnnouncePeer(infoHash, addr.IP.String(), port)
 		}
