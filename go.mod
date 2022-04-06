@@ -2,7 +2,10 @@ module github.com/hktalent/dht
 
 go 1.18
 
-require github.com/multiformats/go-multiaddr v0.5.0
+require (
+	github.com/multiformats/go-multiaddr v0.5.0
+	github.com/pion/stun v0.3.5
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -16,10 +19,9 @@ require (
 	github.com/multiformats/go-multibase v0.0.3 // indirect
 	github.com/multiformats/go-multihash v0.1.0 // indirect
 	github.com/multiformats/go-varint v0.0.6 // indirect
-	github.com/pion/stun v0.3.5 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	golang.org/x/crypto v0.0.0-20220331220935-ae2d96664a29 // indirect
-	golang.org/x/sys v0.0.0-20220405052023-b1e9470b6e64 // indirect
+	golang.org/x/sys v0.0.0-20220405210540-1e041c57c461 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	lukechampine.com/blake3 v1.1.7 // indirect
 )
