@@ -577,6 +577,7 @@ func handleRequest(dht *DHT, addr *net.UDPAddr,
 			{"port", "int"},
 			{"token", "string"}}); err != nil {
 
+			// 给个erro的响应
 			send(dht, addr, makeError(t, protocolError, err.Error()))
 			return
 		}
@@ -585,6 +586,8 @@ func handleRequest(dht *DHT, addr *net.UDPAddr,
 		port := a["port"].(int)
 		token := a["token"].(string)
 
+		// 判断地址和token的一致性，不一致就返回
+		// addr在管理器中就从管理器中删除
 		if !dht.tokenManager.check(addr, token) {
 			//			send(dht, addr, makeError(t, protocolError, "invalid token"))
 			return
@@ -592,13 +595,14 @@ func handleRequest(dht *DHT, addr *net.UDPAddr,
 
 		if impliedPort, ok := a["implied_port"]; ok &&
 			impliedPort.(int) != 0 {
-
 			port = addr.Port
 		}
 
+		// 伪装模式，接收DHT网络 数据包，监听功能
 		if dht.IsStandardMode() {
 			dht.peersManager.Insert(infoHash, newPeer(addr.IP, port, token))
 
+			// 给个响应
 			send(dht, addr, makeResponse(t, map[string]interface{}{
 				"id": dht.id(id),
 			}))
@@ -712,6 +716,7 @@ func handleResponse(dht *DHT, addr *net.UDPAddr,
 		dht.routingTable.RemoveByAddr(addr.String())
 		return
 	}
+	// 记录地址信息，便于将来使用，当然可能是临时的，也可能是长效的
 	go dht.appendIps2DhtTracker(addr.String(), "")
 	node, err := newNode(id, addr.Network(), addr.String())
 	if err != nil {

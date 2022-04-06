@@ -119,14 +119,15 @@ func NewStandardConfig() *Config {
 		// token有效期10分钟
 		TokenExpiredAfter:    time.Duration(time.Minute * 10),
 		MaxTransactionCursor: math.MaxUint32,
-		MaxNodes:             5000 * g_nX,
-		BlockedIPs:           make([]string, 0),
-		BlackListMaxSize:     65536,
-		Try:                  2,
-		Mode:                 StandardMode,
-		PacketJobLimit:       1024 * g_nX,
-		PacketWorkerLimit:    256 * g_nX,
-		RefreshNodeNum:       8 * g_nX,
+		// default 5000
+		MaxNodes:          50000 * g_nX,
+		BlockedIPs:        make([]string, 0),
+		BlackListMaxSize:  65536,
+		Try:               2,
+		Mode:              StandardMode,
+		PacketJobLimit:    1024 * g_nX,
+		PacketWorkerLimit: 256 * g_nX,
+		RefreshNodeNum:    8 * g_nX,
 	}
 }
 
@@ -384,7 +385,8 @@ func (dht *DHT) id(target string) string {
 }
 
 /*
-1、通过infoHash 通知相邻节点，我在下载、关注infoHash的种子文件
+1、通过infoHash 通知相邻节点，我提供、有某资源的下载、关注infoHash的种子文件
+2、这个过程只是通知当前内存中得到的相邻节点
 */
 func (dht *DHT) AnnouncePeer(infoHash string) error {
 	if !dht.Ready {

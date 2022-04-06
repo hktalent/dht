@@ -29,7 +29,7 @@ type bitTorrent struct {
 var (
 	address, resUrl *string
 	// len = 40
-	myPeerId = hex.EncodeToString([]byte("https://ee.51pwn.com")[:20])
+	// myPeerId = hex.EncodeToString([]byte("https://ee.51pwn.com")[:20])
 )
 
 /*
@@ -210,6 +210,8 @@ func main() {
 
 	config := dht.NewCrawlConfig()
 	config.PacketWorkerLimit = 2560
+	// config.Address = dht.StunList{}.GetSelfPublicIpPort()
+	// fmt.Println(config.Address)
 	if "" != *address {
 		config.Address = *address
 	}
@@ -223,13 +225,15 @@ func main() {
 	d := dht.New(config)
 	// d.Mode = &dht.newNode(myPeerId, "", config.Address)
 	d.OnGetPeersResponse = func(infoHash string, peer *dht.Peer) {
-		if infoHash == myPeerId {
+		if infoHash == d.LocalNodeId {
 			fmt.Printf("my private net: <%s:%d>\n", peer.IP, peer.Port)
 		} else if 0 < len(*resUrl) {
 			// sendReq([]byte(fmt.Sprintf("{\"ip\":\"%s\",\"port\":%d,\"type\":\"peer\"}", peer.IP, peer.Port)), fmt.Sprintf("%s_%d", peer.IP, peer.Port))
 			fmt.Printf("OnGetPeersResponse peer info : %v:%d\n", peer.IP.String(), peer.Port)
 		}
 	}
+	// 告知相邻节点我有这个资源
+	d.AnnouncePeer(d.LocalNodeId)
 	// go getMyPeer(d)
 	fmt.Println("start run, wait for 1 ~ 2 minute ...")
 	d.Run()

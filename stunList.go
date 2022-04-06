@@ -2,10 +2,12 @@ package dht
 
 import (
 	_ "embed"
+	"fmt"
 	"net/url"
 	"strings"
 
 	"github.com/multiformats/go-multiaddr"
+	"github.com/pion/stun"
 )
 
 /*
@@ -77,4 +79,56 @@ func (r StunList) GetDhtList() []string {
 		}
 	}
 	return a
+}
+
+//go:embed stunLists.txt
+var stunTrackers []byte
+var aStunLists []string
+
+// 获取stun服务器列表
+func (r StunList) GetStunLists() []string {
+	if 0 == len(aStunLists) {
+		aStunLists = strings.Split(strings.TrimSpace(string(stunTrackers)), "\n")
+	}
+	return aStunLists
+}
+
+// 获取本机NAT的public ip和port
+func (r StunList) GetSelfPublicIpPort() string {
+	a := r.GetStunLists()
+	message := stun.MustBuild(stun.TransactionID, stun.BindingRequest)
+	done := make(chan struct{})
+	ip := make(chan string)
+	for _, v1 := range a {
+		xxx1 := v1
+		go func(v string) {
+			select {
+			case <-done:
+				return
+			default:
+				{
+					c, err := stun.Dial("udp", v)
+					if err != nil {
+						return
+					}
+					if err := c.Do(message, func(res stun.Event) {
+						if res.Error != nil {
+							return
+						}
+						var xorAddr stun.XORMappedAddress
+						if err := xorAddr.GetFrom(res.Message); err != nil {
+							return
+						}
+						sss := fmt.Sprintf("%s:%d", xorAddr.IP, xorAddr.Port)
+						close(done)
+						ip <- sss
+
+					}); err != nil {
+					}
+				}
+			}
+		}(xxx1)
+	}
+	s := <-ip
+	return s
 }
