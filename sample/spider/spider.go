@@ -125,9 +125,9 @@ func sendReq(data []byte, id string) {
 向相邻节点发起查询，发完就退出
 */
 func getMyPeer(d *dht.DHT) {
-	fmt.Println("getMyPeer " + myPeerId)
+	fmt.Println("getMyPeer " + d.LocalNodeId)
 	for {
-		err := d.GetPeers(myPeerId)
+		err := d.GetPeers(d.LocalNodeId)
 		// 有错误发生就继续循环，继续发送节点查询
 		if err != nil && err != dht.ErrNotReady {
 			fmt.Println(err)

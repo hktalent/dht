@@ -326,12 +326,21 @@ func (tm *transactionManager) query(q *query, try int) {
 // run starts to listen and consume the query chan.
 func (tm *transactionManager) run() {
 	var q *query
-
+	// 限定query1024并发，不然会很卡
+	xQ := make(chan struct{}, 1024*9)
 	for {
 		select {
 		case q = <-tm.queryChan:
 			// 这里必须异步： go，否则全部堵塞无法运行
-			go tm.query(q, tm.dht.Try)
+			// go tm.query(q, tm.dht.Try)
+			xQ <- struct{}{}
+			go func(q1 *query) {
+				defer func() {
+					<-xQ
+				}()
+				tm.query(q1, tm.dht.Try)
+			}(q)
+
 		}
 	}
 }
