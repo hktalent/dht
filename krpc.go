@@ -327,7 +327,7 @@ func (tm *transactionManager) query(q *query, try int) {
 func (tm *transactionManager) run() {
 	var q *query
 	// 限定query1024并发，不然会很卡
-	xQ := make(chan struct{}, 1024*9)
+	xQ := make(chan struct{}, tm.dht.QueryWorkLimit)
 	for {
 		select {
 		case q = <-tm.queryChan:

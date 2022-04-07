@@ -95,46 +95,67 @@ func (r StunList) GetStunLists() []string {
 }
 
 // 获取本机NAT的public ip和port
-func (r StunList) GetSelfPublicIpPort() (szIp string, port int) {
+func (r StunList) GetSelfPublicIpPort() (string, int) {
 	a := r.GetStunLists()
 	message := stun.MustBuild(stun.TransactionID, stun.BindingRequest)
-	done := make(chan struct{})
+	// len(a)
+	done := make(chan struct{}, 16)
+	doneClose := make(chan bool)
 	ip := make(chan string)
 	for _, v1 := range a {
-		xxx1 := v1
-		go func(v string) {
-			select {
-			case <-done:
-				return
-			default:
-				{
-					c, err := stun.Dial("udp", v)
-					if err != nil {
+		select {
+		case <-done:
+			break
+		default:
+			{
+				xxx1 := v1
+				done <- struct{}{}
+				go func(v string) {
+					defer func() {
+						<-done
+					}()
+					select {
+					case <-done:
 						return
-					}
-					if err := c.Do(message, func(res stun.Event) {
-						if res.Error != nil {
-							return
+					default:
+						{
+							c, err := stun.Dial("udp", v)
+							if err != nil {
+								return
+							}
+							if err := c.Do(message, func(res stun.Event) {
+								if res.Error != nil {
+									return
+								}
+								var xorAddr stun.XORMappedAddress
+								if err := xorAddr.GetFrom(res.Message); err != nil {
+									return
+								}
+								sss := fmt.Sprintf("%s:%d", xorAddr.IP, xorAddr.Port)
+								ip <- sss
+							}); err != nil {
+							}
 						}
-						var xorAddr stun.XORMappedAddress
-						if err := xorAddr.GetFrom(res.Message); err != nil {
-							return
-						}
-						sss := fmt.Sprintf("%s:%d", xorAddr.IP, xorAddr.Port)
-						close(done)
-						ip <- sss
-
-					}); err != nil {
 					}
-				}
+				}(xxx1)
 			}
-		}(xxx1)
+		}
+
 	}
-	s := <-ip
-	a1 := strings.Split(s, ":")
-	szIp = a1[0]
-	port, err := strconv.Atoi(a1[1])
-	if err == nil {
+	var s, szIp string
+	var port int
+	var err error
+	select {
+	case s = <-ip:
+		{
+			close(doneClose)
+			a1 := strings.Split(s, ":")
+			szIp = a1[0]
+			port, err = strconv.Atoi(a1[1])
+			if err == nil {
+			}
+		}
 	}
-	return
+
+	return szIp, port
 }

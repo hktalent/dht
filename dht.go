@@ -84,6 +84,7 @@ type Config struct {
 	AnnouncePeerLists []string
 	StunList          StunList
 	PublicIp          string
+	QueryWorkLimit    int
 }
 
 var (
@@ -134,9 +135,13 @@ func NewStandardConfig() *Config {
 		PacketWorkerLimit: 256 * g_nX,
 		RefreshNodeNum:    8 * g_nX,
 		StunList:          StunList{},
+		// 避免query太多导致cpu太高
+		QueryWorkLimit: 4096,
 	}
+	// fmt.Printf("start get IP ")
 	ip, _ := xx.StunList.GetSelfPublicIpPort()
 	xx.PublicIp = ip
+	fmt.Println(" get IP is ", ip)
 	return xx
 }
 
@@ -327,12 +332,15 @@ func (dht *DHT) appendIps2DhtTracker(s string, fileName string) {
 }
 
 // 网络切换时，外部ip发生变化，得重新来
-func (dht *DHT) checkPublicIp() {
+func (dht *DHT) checkPublicIp() bool {
 	ip, _ := dht.Config.StunList.GetSelfPublicIpPort()
 	if ip != dht.Config.PublicIp {
+		fmt.Println("ip is changed new: ", ip, " old: ", dht.Config.PublicIp)
 		dht.blackList.ClearAll()
 		dht.Config.PublicIp = ip
+		return true
 	}
+	return false
 }
 
 /*
@@ -342,7 +350,8 @@ join makes current node join the dht network.
 func (dht *DHT) join() {
 	wg := &sync.WaitGroup{}
 	// 限制 4096 个并发
-	ch := make(chan struct{}, 16)
+	// len(dht.PrimeNodes)
+	ch := make(chan struct{}, 128)
 	// ch := make(chan struct{}, len(dht.Config.PrimeNodes))
 	// fmt.Println(len(dht.PrimeNodes))
 	// s1 := strconv.Itoa(len(dht.PrimeNodes))
@@ -499,21 +508,24 @@ func (dht *DHT) Run() {
 	dht.init()
 
 	dht.listen()
-	dht.join()
+	go dht.join()
 
 	dht.Ready = true
 
 	var pkt packet
 	tick := time.Tick(dht.CheckKBucketPeriod)
 
+	tick1 := time.Tick(time.Duration(time.Second * 10))
+	fmt.Println("waitting for dht ...")
 	for {
 		select {
 		case pkt = <-dht.packets:
 			handle(dht, pkt)
+		case <-tick1:
+			dht.checkPublicIp()
+			dht.doAnnouncePeer()
 		// 每几秒执行一次
 		case <-tick:
-			dht.doAnnouncePeer()
-			dht.checkPublicIp()
 			if dht.routingTable.Len() == 0 {
 				dht.join()
 			} else if dht.transactionManager.len() == 0 {
