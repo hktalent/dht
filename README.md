@@ -8,7 +8,7 @@
 - :white_check_mark: 45396 DHT tracker server ips，now,fly in at high speed to DHT network
 - :white_check_mark: Rich annotations
 - :white_check_mark: Friendly UML diagram rendering
-- :white_check_mark: 优化、解决中国无法连接DHT Tracker的bug(Optimize and solve the bug that China cannot connect to DHT tracker)
+- :white_check_mark: china,please use VPN over GWF
 - :white_check_mark: fix 启动时卡顿问题
 - :white_check_mark: fix do one time bug,now to tick 30 Second to do it
 - :white_check_mark: fix public ip changed, cleanAll blackIp to do join
