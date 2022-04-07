@@ -147,7 +147,7 @@ func (r StunList) GetSelfPublicIpPort() (string, int) {
 	case s = <-ip:
 		{
 			close(doneClose)
-			fmt.Println("close(doneClose) ...", len(done))
+			// fmt.Println("close(doneClose) ...", len(done))
 			a1 := strings.Split(s, ":")
 			szIp = a1[0]
 			port, err = strconv.Atoi(a1[1])
