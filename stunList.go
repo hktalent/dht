@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/multiformats/go-multiaddr"
@@ -94,7 +95,7 @@ func (r StunList) GetStunLists() []string {
 }
 
 // 获取本机NAT的public ip和port
-func (r StunList) GetSelfPublicIpPort() string {
+func (r StunList) GetSelfPublicIpPort() (szIp string, port int) {
 	a := r.GetStunLists()
 	message := stun.MustBuild(stun.TransactionID, stun.BindingRequest)
 	done := make(chan struct{})
@@ -130,5 +131,10 @@ func (r StunList) GetSelfPublicIpPort() string {
 		}(xxx1)
 	}
 	s := <-ip
-	return s
+	a1 := strings.Split(s, ":")
+	szIp = a1[0]
+	port, err := strconv.Atoi(a1[1])
+	if err == nil {
+	}
+	return
 }

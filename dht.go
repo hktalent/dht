@@ -80,6 +80,10 @@ type Config struct {
 	PacketWorkerLimit int
 	// the nodes num to be fresh in a kbucket
 	RefreshNodeNum int
+	// 发布的资源信息
+	AnnouncePeerLists []string
+	StunList          StunList
+	PublicIp          string
 }
 
 var (
@@ -103,7 +107,8 @@ default:
 
 */
 func NewStandardConfig() *Config {
-	return &Config{
+	var xx *Config
+	xx = &Config{
 		LocalNodeId: LocalNodeId,
 		K:           8,
 		KBucketSize: 8,
@@ -128,7 +133,11 @@ func NewStandardConfig() *Config {
 		PacketJobLimit:    1024 * g_nX,
 		PacketWorkerLimit: 256 * g_nX,
 		RefreshNodeNum:    8 * g_nX,
+		StunList:          StunList{},
 	}
+	ip, _ := xx.StunList.GetSelfPublicIpPort()
+	xx.PublicIp = ip
+	return xx
 }
 
 /*
@@ -206,6 +215,7 @@ func New(config *Config) *DHT {
 			d.blackList.insert(ip, -1)
 		}
 
+		// 不明白把自己加入黑名单干什么
 		ip, err := getRemoteIP()
 		if err != nil {
 			d.blackList.insert(ip, -1)
@@ -316,6 +326,15 @@ func (dht *DHT) appendIps2DhtTracker(s string, fileName string) {
 	}
 }
 
+// 网络切换时，外部ip发生变化，得重新来
+func (dht *DHT) checkPublicIp() {
+	ip, _ := dht.Config.StunList.GetSelfPublicIpPort()
+	if ip != dht.Config.PublicIp {
+		dht.blackList.ClearAll()
+		dht.Config.PublicIp = ip
+	}
+}
+
 /*
 不断加入相邻、活跃、有效节点（加入DHT）
 join makes current node join the dht network.
@@ -384,9 +403,34 @@ func (dht *DHT) id(target string) string {
 	return target[:15] + dht.node.id.RawString()[15:]
 }
 
+// publish resource one time
+func (dht *DHT) doAnnouncePeer() {
+	for _, infoHash := range dht.AnnouncePeerLists {
+		// 相邻节点
+		neighbors := dht.routingTable.GetNeighbors(
+			newBitmapFromString(infoHash), dht.routingTable.Len())
+		// no.id.RawString()
+		for _, no := range neighbors {
+			dht.transactionManager.announcePeer(no, infoHash, 1, no.addr.Port, dht.tokenManager.token(no.addr))
+		}
+	}
+}
+
+// remove publish peer
+func (dht *DHT) RemoveAnnouncePeer(infoHash string) bool {
+	for i, key := range dht.AnnouncePeerLists {
+		if key == infoHash {
+			dht.AnnouncePeerLists = append(dht.AnnouncePeerLists[0:i], dht.AnnouncePeerLists[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
 /*
 1、通过infoHash 通知相邻节点，我提供、有某资源的下载、关注infoHash的种子文件
 2、这个过程只是通知当前内存中得到的相邻节点
+3、通过config.OnAnnouncePeer得到反馈
 */
 func (dht *DHT) AnnouncePeer(infoHash string) error {
 	if !dht.Ready {
@@ -402,14 +446,8 @@ func (dht *DHT) AnnouncePeer(infoHash string) error {
 		}
 		infoHash = string(data)
 	}
-	// 相邻节点
-	neighbors := dht.routingTable.GetNeighbors(
-		newBitmapFromString(infoHash), dht.routingTable.Len())
-
-	// no.id.RawString()
-	for _, no := range neighbors {
-		dht.transactionManager.announcePeer(no, infoHash, 1, no.addr.Port, dht.tokenManager.token(no.addr))
-	}
+	dht.AnnouncePeerLists = append(dht.AnnouncePeerLists, infoHash)
+	dht.doAnnouncePeer()
 
 	return nil
 }
@@ -472,7 +510,10 @@ func (dht *DHT) Run() {
 		select {
 		case pkt = <-dht.packets:
 			handle(dht, pkt)
+		// 每几秒执行一次
 		case <-tick:
+			dht.doAnnouncePeer()
+			dht.checkPublicIp()
 			if dht.routingTable.Len() == 0 {
 				dht.join()
 			} else if dht.transactionManager.len() == 0 {

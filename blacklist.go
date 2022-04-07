@@ -38,6 +38,11 @@ func (bl *blackList) genKey(ip string, port int) string {
 	return key
 }
 
+// 清空所有
+func (bl *blackList) ClearAll() {
+	bl.list = newSyncedMap()
+}
+
 /*
 insert adds a blocked item to the blacklist.
 */
