@@ -139,9 +139,12 @@ func NewStandardConfig() *Config {
 		QueryWorkLimit: 4096,
 	}
 	// fmt.Printf("start get IP ")
-	ip, _ := xx.StunList.GetSelfPublicIpPort()
-	xx.PublicIp = ip
-	fmt.Println(" get IP is ", ip)
+	// ip, _ := xx.StunList.GetSelfPublicIpPort()
+	ip, err := getRemoteIP()
+	if nil == err {
+		xx.PublicIp = ip
+		fmt.Println(" get IP is ", ip)
+	}
 	return xx
 }
 
@@ -333,8 +336,9 @@ func (dht *DHT) appendIps2DhtTracker(s string, fileName string) {
 
 // 网络切换时，外部ip发生变化，得重新来
 func (dht *DHT) checkPublicIp() bool {
-	ip, _ := dht.Config.StunList.GetSelfPublicIpPort()
-	if ip != dht.Config.PublicIp {
+	// ip, _ := dht.Config.StunList.GetSelfPublicIpPort()
+	ip, err := getRemoteIP()
+	if nil == err && ip != dht.Config.PublicIp {
 		fmt.Println("ip is changed new: ", ip, " old: ", dht.Config.PublicIp)
 		dht.blackList.ClearAll()
 		dht.Config.PublicIp = ip

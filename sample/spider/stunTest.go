@@ -7,6 +7,6 @@ import (
 )
 
 func main() {
-	ip := dht.StunList{}.GetSelfPublicIpPort()
-	fmt.Println(ip)
+	ip, port := dht.StunList{}.GetSelfPublicIpPort()
+	fmt.Println(ip, port)
 }

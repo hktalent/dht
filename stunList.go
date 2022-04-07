@@ -97,45 +97,43 @@ func (r StunList) GetStunLists() []string {
 // 获取本机NAT的public ip和port
 func (r StunList) GetSelfPublicIpPort() (string, int) {
 	a := r.GetStunLists()
-	message := stun.MustBuild(stun.TransactionID, stun.BindingRequest)
+
 	// len(a)
 	done := make(chan struct{}, 16)
 	doneClose := make(chan bool)
 	ip := make(chan string)
+	// var wg sync.WaitGroup
 	for _, v1 := range a {
 		select {
-		case <-done:
+		case <-doneClose:
 			break
 		default:
 			{
 				xxx1 := v1
 				done <- struct{}{}
+				// wg.Add(1)
 				go func(v string) {
 					defer func() {
 						<-done
+						// wg.Done()
 					}()
-					select {
-					case <-done:
+					c, err := stun.Dial("udp", v)
+					if err != nil {
 						return
-					default:
-						{
-							c, err := stun.Dial("udp", v)
-							if err != nil {
-								return
-							}
-							if err := c.Do(message, func(res stun.Event) {
-								if res.Error != nil {
-									return
-								}
-								var xorAddr stun.XORMappedAddress
-								if err := xorAddr.GetFrom(res.Message); err != nil {
-									return
-								}
-								sss := fmt.Sprintf("%s:%d", xorAddr.IP, xorAddr.Port)
-								ip <- sss
-							}); err != nil {
-							}
+					}
+					message := stun.MustBuild(stun.TransactionID, stun.BindingRequest)
+					if err := c.Do(message, func(res stun.Event) {
+						if res.Error != nil {
+							return
 						}
+						var xorAddr stun.XORMappedAddress
+						if err := xorAddr.GetFrom(res.Message); err != nil {
+							return
+						}
+						sss := fmt.Sprintf("%s:%d", xorAddr.IP, xorAddr.Port)
+						ip <- sss
+					}); err != nil {
+
 					}
 				}(xxx1)
 			}
@@ -149,6 +147,7 @@ func (r StunList) GetSelfPublicIpPort() (string, int) {
 	case s = <-ip:
 		{
 			close(doneClose)
+			fmt.Println("close(doneClose) ...", len(done))
 			a1 := strings.Split(s, ":")
 			szIp = a1[0]
 			port, err = strconv.Atoi(a1[1])
@@ -156,6 +155,7 @@ func (r StunList) GetSelfPublicIpPort() (string, int) {
 			}
 		}
 	}
+	// wg.Wait()
 
 	return szIp, port
 }
