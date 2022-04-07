@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log"
 	"math"
 	"net"
 	"os"
@@ -82,9 +83,11 @@ type Config struct {
 	RefreshNodeNum int
 	// 发布的资源信息
 	AnnouncePeerLists []string
+	GetPeerLists      []string
 	StunList          StunList
 	PublicIp          string
 	QueryWorkLimit    int
+	Log               *log.Logger
 }
 
 var (
@@ -137,13 +140,16 @@ func NewStandardConfig() *Config {
 		StunList:          StunList{},
 		// 避免query太多导致cpu太高
 		QueryWorkLimit: 4096,
+		Log:            log.New(os.Stdout, "", 5),
 	}
 	// fmt.Printf("start get IP ")
 	// ip, _ := xx.StunList.GetSelfPublicIpPort()
 	ip, err := getRemoteIP()
 	if nil == err {
 		xx.PublicIp = ip
-		fmt.Println(" get IP is ", ip)
+		if nil != xx.Log {
+			xx.Log.Println("your public IP is ", ip)
+		}
 	}
 	return xx
 }
@@ -184,6 +190,12 @@ type DHT struct {
 	workerTokens       chan struct{}
 }
 
+func (dht *DHT) Log(args ...interface{}) {
+	if nil != dht.Config.Log {
+		dht.Config.Log.Println(args...)
+	}
+}
+
 /*
 New returns a DHT pointer. If config is nil, then config will be set to
 the default config.
@@ -217,20 +229,24 @@ func New(config *Config) *DHT {
 	for _, ip := range config.BlockedIPs {
 		d.blackList.insert(ip, -1)
 	}
+	d.self2black()
+	return d
+}
 
+// 本地ip都加入黑名单不处理
+func (dht *DHT) self2black() {
+	//
 	go func() {
 		for _, ip := range getLocalIPs() {
-			d.blackList.insert(ip, -1)
+			dht.blackList.insert(ip, -1)
 		}
 
 		// 不明白把自己加入黑名单干什么
 		ip, err := getRemoteIP()
 		if err != nil {
-			d.blackList.insert(ip, -1)
+			dht.blackList.insert(ip, -1)
 		}
 	}()
-
-	return d
 }
 
 // IsStandardMode returns whether mode is StandardMode.
@@ -294,6 +310,7 @@ func (dht *DHT) getIps(domain string) {
 	}
 }
 
+// 从data中查找element
 func SliceIndex(element string, data []string) int {
 	for k, v := range data {
 		if element == v {
@@ -335,12 +352,16 @@ func (dht *DHT) appendIps2DhtTracker(s string, fileName string) {
 }
 
 // 网络切换时，外部ip发生变化，得重新来
+// 每10秒执行一次
 func (dht *DHT) checkPublicIp() bool {
-	// ip, _ := dht.Config.StunList.GetSelfPublicIpPort()
-	ip, err := getRemoteIP()
-	if nil == err && ip != dht.Config.PublicIp {
-		fmt.Println("ip is changed new: ", ip, " old: ", dht.Config.PublicIp)
+	ip, _ := dht.Config.StunList.GetSelfPublicIpPort()
+	// ip, err := getRemoteIP()
+	// dht.Log("start checkPublicIp", ip, dht.Config.PublicIp)
+	// if nil == err && ip != dht.Config.PublicIp {
+	if ip != dht.Config.PublicIp {
+		dht.Log("ip is changed new: ", ip, " old: ", dht.Config.PublicIp, " now clearn all blackList")
 		dht.blackList.ClearAll()
+		dht.self2black()
 		dht.Config.PublicIp = ip
 		return true
 	}
@@ -444,6 +465,7 @@ func (dht *DHT) RemoveAnnouncePeer(infoHash string) bool {
 1、通过infoHash 通知相邻节点，我提供、有某资源的下载、关注infoHash的种子文件
 2、这个过程只是通知当前内存中得到的相邻节点
 3、通过config.OnAnnouncePeer得到反馈
+4、加到发布的列表中，定时器进行发布，不仅仅是一次，每10秒执行一次
 */
 func (dht *DHT) AnnouncePeer(infoHash string) error {
 	if !dht.Ready {
@@ -459,7 +481,10 @@ func (dht *DHT) AnnouncePeer(infoHash string) error {
 		}
 		infoHash = string(data)
 	}
-	dht.AnnouncePeerLists = append(dht.AnnouncePeerLists, infoHash)
+	// 加到发布的列表中，定时器进行发布，不仅仅是一次
+	if -1 == SliceIndex(infoHash, dht.AnnouncePeerLists) {
+		dht.AnnouncePeerLists = append(dht.AnnouncePeerLists, infoHash)
+	}
 	dht.doAnnouncePeer()
 
 	return nil
@@ -471,7 +496,7 @@ GetPeers 向相邻节点发起匿名 infohash查询
 注意：
    1、这种查询使用时需要间隔时间不停查询，直到有结果
    2、这里只是向当前内存路由表中临近的节点发起一次 get_peers 查询，没有查到是不管的
-
+   3、通过OnGetPeersResponse 获取结果
 */
 func (dht *DHT) GetPeers(infoHash string) error {
 	if !dht.Ready {
@@ -496,8 +521,19 @@ func (dht *DHT) GetPeers(infoHash string) error {
 	for _, no := range neighbors {
 		dht.transactionManager.getPeers(no, infoHash)
 	}
+	if -1 == SliceIndex(infoHash, dht.GetPeerLists) {
+		dht.GetPeerLists = append(dht.GetPeerLists, infoHash)
+	}
 
 	return nil
+}
+
+// 1、执行所有想获取的infoHash信息
+// 2、通过OnGetPeersResponse 回调获取结果
+func (dht *DHT) DoAllGetPeers() {
+	for _, v := range dht.GetPeerLists {
+		dht.GetPeers(v)
+	}
 }
 
 /*
@@ -507,6 +543,7 @@ Run starts the dht.
 3、并行异步不停加入临近、活跃节点，也就是加入DHT网络
 4、路由表的时候，继续加入joinDHT网络
 5、transaction管理表 为空（size==0）的时候，刷新路由表生命周期
+6、每CheckKBucketPeriod（30）秒执行一次join 加入DHT网络
 */
 func (dht *DHT) Run() {
 	dht.init()
@@ -520,15 +557,18 @@ func (dht *DHT) Run() {
 	tick := time.Tick(dht.CheckKBucketPeriod)
 
 	tick1 := time.Tick(time.Duration(time.Second * 10))
-	fmt.Println("waitting for dht ...")
+	dht.Log("DHT Server is start ...")
 	for {
 		select {
 		case pkt = <-dht.packets:
 			handle(dht, pkt)
 		case <-tick1:
 			dht.checkPublicIp()
-			dht.doAnnouncePeer()
-		// 每几秒执行一次
+			// 发布
+			go dht.doAnnouncePeer()
+			// 获取
+			go dht.DoAllGetPeers()
+		// 每30秒执行一次
 		case <-tick:
 			if dht.routingTable.Len() == 0 {
 				dht.join()

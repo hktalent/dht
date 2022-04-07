@@ -178,7 +178,7 @@ func NewWire(blackListSize, requestQueueSize, workerQueueSize int) *Wire {
 		blackList:    newBlackList(blackListSize),
 		queue:        newSyncedMap(),
 		requests:     make(chan Request, requestQueueSize),
-		responses:    make(chan Response, 1024),
+		responses:    make(chan Response, 1024*4),
 		workerTokens: make(chan struct{}, workerQueueSize),
 	}
 }

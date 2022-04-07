@@ -109,14 +109,13 @@ func getLocalIPs() (ips []string) {
 	return
 }
 
-/*
-getRemoteIP returns the wlan ip.
-通过
-curl -H 'User-Agent:curl' http://ifconfig.me
-获取本机互联网ip地址
-缺点不通互联网的时候不准确
-其他方式可以通过webrtc来获得本地地址更加准确和方便
-*/
+// getRemoteIP returns the wlan ip.
+// 通过
+// curl -H 'User-Agent:curl' http://ifconfig.me
+// 获取本机互联网ip地址
+// 缺点不通互联网的时候不准确
+// 其他方式可以通过webrtc来获得本地地址更加准确和方便
+// 这个方法有bug，切换vpn的时候，结果并没有发生变化
 func getRemoteIP() (ip string, err error) {
 	client := &http.Client{
 		Timeout: time.Second * 30,
@@ -128,6 +127,7 @@ func getRemoteIP() (ip string, err error) {
 	}
 
 	req.Header.Set("User-Agent", "curl")
+	req.Header.Set("Cache-Control", "no-cache")
 	res, err := client.Do(req)
 	if err != nil {
 		return

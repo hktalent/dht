@@ -40,7 +40,8 @@ func (bl *blackList) genKey(ip string, port int) string {
 
 // 清空所有
 func (bl *blackList) ClearAll() {
-	bl.list = newSyncedMap()
+	bl.list.data = make(map[interface{}]interface{})
+	// bl.list = newSyncedMap()
 }
 
 /*

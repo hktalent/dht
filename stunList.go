@@ -96,7 +96,7 @@ func (r StunList) GetStunLists() []string {
 
 // 获取本机NAT的public ip和port
 func (r StunList) GetSelfPublicIpPort() (string, int) {
-	a := r.GetStunLists()
+	a := r.GetStunLists()[0:1]
 
 	// len(a)
 	done := make(chan struct{}, 16)
@@ -153,6 +153,7 @@ func (r StunList) GetSelfPublicIpPort() (string, int) {
 			port, err = strconv.Atoi(a1[1])
 			if err == nil {
 			}
+			close(done)
 		}
 	}
 	// wg.Wait()

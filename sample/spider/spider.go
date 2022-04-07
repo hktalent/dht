@@ -154,12 +154,14 @@ func main() {
 	}
 	flag.Parse()
 
+	// debug 优化时启用///////////////////////
 	go func() {
 		fmt.Println("debug info: \nopen http://127.0.0.1:6060/debug/pprof/\n")
 		http.ListenAndServe(":6060", nil)
 	}()
+	//////////////////////////////////////////*/
 
-	nX := 10
+	nX := 100
 	// blackListSize, requestQueueSize, workerQueueSize
 	w := dht.NewWire(65536, 1024*nX, 256*nX)
 	// 处理响应，保存种子信息
@@ -199,7 +201,7 @@ func main() {
 			data, err := json.Marshal(bt)
 			if err == nil {
 				if 0 < len(*resUrl) {
-					sendReq(data, bt.InfoHash)
+					go sendReq(data, bt.InfoHash)
 				}
 			} else {
 				fmt.Printf("这个种子处理起来出问题了，%s\n\n", data)
@@ -207,6 +209,7 @@ func main() {
 		}
 	}()
 	go w.Run()
+	////////////////////////////////////////////////////////////////////////////////////////////
 
 	config := dht.NewCrawlConfig()
 	config.PacketWorkerLimit = 2560
@@ -217,11 +220,12 @@ func main() {
 	}
 	// 发布的节点信息到来
 	config.OnAnnouncePeer = func(infoHash, ip string, port int) {
+		// 这里和爬虫建立管理
 		w.Request([]byte(infoHash), ip, port)
 		// sendReq([]byte(fmt.Sprintf("{\"ip\":\"%s\",\"port\":%d,\"type\":\"peer\"}", ip, port)), fmt.Sprintf("%s_%d", ip, port))
 		fmt.Printf("OnAnnouncePeerinfo : %s:%d\n", ip, port)
 	}
-	fmt.Println("DHT tracer servers lists length : ", len(config.PrimeNodes))
+	// fmt.Println("DHT tracer servers lists length : ", len(config.PrimeNodes))
 	d := dht.New(config)
 	// d.Mode = &dht.newNode(myPeerId, "", config.Address)
 	d.OnGetPeersResponse = func(infoHash string, peer *dht.Peer) {
@@ -235,6 +239,6 @@ func main() {
 	// 告知相邻节点我有这个资源
 	d.AnnouncePeer(d.LocalNodeId)
 	// go getMyPeer(d)
-	fmt.Println("start run, wait for 1 ~ 2 minute ...")
+	d.Log("wait join DHT net for 1 ~ 2 minute ...")
 	d.Run()
 }
