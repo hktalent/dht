@@ -121,7 +121,7 @@ func (r StunList) GetSelfPublicIpPort() (string, int) {
 					if err != nil {
 						return
 					}
-
+					defer c.Close()
 					if err := c.Do(message, func(res stun.Event) {
 						if res.Error != nil {
 							return
@@ -169,9 +169,11 @@ func (r StunList) GetSelfPublicIpPort1() (string, int) {
 	// var wg sync.WaitGroup
 	for _, v := range a {
 		c, err := stun.Dial("udp", v)
+
 		if err != nil {
 			continue
 		}
+		defer c.Close()
 		if err := c.Do(message, func(res stun.Event) {
 			if res.Error != nil {
 				return
