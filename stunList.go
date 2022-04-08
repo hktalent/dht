@@ -192,10 +192,13 @@ func (r StunList) GetSelfPublicIpPort1() (string, int) {
 	var szIp string
 	var port int
 	var err error
+	port = 0
 	a1 := strings.Split(ip, ":")
 	szIp = a1[0]
-	port, err = strconv.Atoi(a1[1])
-	if err == nil {
+	if 1 < len(a1) {
+		port, err = strconv.Atoi(a1[1])
+		if err == nil {
+		}
 	}
 	return szIp, port
 }

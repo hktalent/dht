@@ -211,6 +211,7 @@ func main() {
 	go w.Run()
 	////////////////////////////////////////////////////////////////////////////////////////////
 
+	var d *dht.DHT
 	config := dht.NewCrawlConfig()
 	config.PacketWorkerLimit = 2560
 	// config.Address = dht.StunList{}.GetSelfPublicIpPort()
@@ -224,9 +225,10 @@ func main() {
 		w.Request([]byte(infoHash), ip, port)
 		// sendReq([]byte(fmt.Sprintf("{\"ip\":\"%s\",\"port\":%d,\"type\":\"peer\"}", ip, port)), fmt.Sprintf("%s_%d", ip, port))
 		fmt.Printf("OnAnnouncePeerinfo : %s:%d\n", ip, port)
+		d.Join2addr(fmt.Sprintf("%s:%d", ip, port))
 	}
 	// fmt.Println("DHT tracer servers lists length : ", len(config.PrimeNodes))
-	d := dht.New(config)
+	d = dht.New(config)
 	// d.Mode = &dht.newNode(myPeerId, "", config.Address)
 	d.OnGetPeersResponse = func(infoHash string, peer *dht.Peer) {
 		if infoHash == d.LocalNodeId {

@@ -10,7 +10,6 @@ import (
 	"math"
 	"net"
 	"os"
-	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -368,6 +367,16 @@ func (dht *DHT) checkPublicIp() bool {
 	return false
 }
 
+func (dht *DHT) Join2addr(addr string) {
+	raddr, err := net.ResolveUDPAddr(dht.Network, addr)
+	if err == nil {
+		dht.transactionManager.findNode(
+			&node{addr: raddr},
+			dht.node.id.RawString(),
+		)
+	}
+}
+
 /*
 不断加入相邻、活跃、有效节点（加入DHT）
 join makes current node join the dht network.
@@ -388,26 +397,27 @@ func (dht *DHT) join() {
 				wg.Done()
 				<-ch
 			}()
-			raddr, err := net.ResolveUDPAddr(dht.Network, addr)
-			// if err != nil {
-			// 	// fmt.Println("error: ", addr, err)
-			// 	return
+			dht.Join2addr(addr)
+			// raddr, err := net.ResolveUDPAddr(dht.Network, addr)
+			// // if err != nil {
+			// // 	// fmt.Println("error: ", addr, err)
+			// // 	return
+			// // }
+			// if err == nil {
+			// 	// go dht.appendIps2DhtTracker(raddr.String(), "/chinaOk.txt")
+			// 	// 转换 域名为ip提高效率
+			// 	if ok, _ := regexp.Match(`^[0-9\.:]+$`, []byte(addr)); ok {
+			// 		// fmt.Println(addr)
+			// 	} else if bCloseRcdIps {
+			// 		fmt.Println(addr)
+			// 		dht.getIps(addr)
+			// 	}
+			// 	// NOTE: Temporary node has NOT node id.
+			// 	dht.transactionManager.findNode(
+			// 		&node{addr: raddr},
+			// 		dht.node.id.RawString(),
+			// 	)
 			// }
-			if err == nil {
-				// go dht.appendIps2DhtTracker(raddr.String(), "/chinaOk.txt")
-				// 转换 域名为ip提高效率
-				if ok, _ := regexp.Match(`^[0-9\.:]+$`, []byte(addr)); ok {
-					// fmt.Println(addr)
-				} else if bCloseRcdIps {
-					fmt.Println(addr)
-					dht.getIps(addr)
-				}
-				// NOTE: Temporary node has NOT node id.
-				dht.transactionManager.findNode(
-					&node{addr: raddr},
-					dht.node.id.RawString(),
-				)
-			}
 		}(addr)
 	}
 	wg.Wait()
