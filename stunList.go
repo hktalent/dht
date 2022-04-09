@@ -164,7 +164,7 @@ func (r StunList) GetSelfPublicIpPort() (string, int) {
 }
 
 func (r StunList) GetSelfPublicIpPort1() (string, int) {
-	a := r.GetStunLists()[0:1]
+	a := r.GetStunLists()[0:4]
 	message := stun.MustBuild(stun.TransactionID, stun.BindingRequest)
 	// len(a)
 	var ip string
