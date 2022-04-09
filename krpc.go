@@ -2,6 +2,7 @@ package dht
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"strings"
 	"sync"
@@ -500,6 +501,8 @@ func handleRequest(dht *DHT, addr *net.UDPAddr,
 		return
 	}
 
+	// 不管节点是什么，加Ta
+	dht.Join2addr(fmt.Sprintf("%s:%d", addr.IP.String(), addr.Port))
 	switch q {
 	case pingType:
 		send(dht, addr, makeResponse(t, map[string]interface{}{

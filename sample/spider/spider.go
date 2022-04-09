@@ -225,7 +225,7 @@ func main() {
 		w.Request([]byte(infoHash), ip, port)
 		// sendReq([]byte(fmt.Sprintf("{\"ip\":\"%s\",\"port\":%d,\"type\":\"peer\"}", ip, port)), fmt.Sprintf("%s_%d", ip, port))
 		fmt.Printf("OnAnnouncePeerinfo : %s:%d\n", ip, port)
-		d.Join2addr(fmt.Sprintf("%s:%d", ip, port))
+		// d.Join2addr(fmt.Sprintf("%s:%d", ip, port))
 	}
 	// fmt.Println("DHT tracer servers lists length : ", len(config.PrimeNodes))
 	d = dht.New(config)

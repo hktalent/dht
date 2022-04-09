@@ -364,12 +364,14 @@ func (dht *DHT) checkPublicIp() bool {
 }
 
 func (dht *DHT) Join2addr(addr string) {
-	raddr, err := net.ResolveUDPAddr(dht.Network, addr)
-	if err == nil {
-		dht.transactionManager.findNode(
-			&node{addr: raddr},
-			dht.node.id.RawString(),
-		)
+	if "" == dht.Config.PublicIp || -1 == strings.Index(addr, dht.Config.PublicIp) {
+		raddr, err := net.ResolveUDPAddr(dht.Network, addr)
+		if err == nil {
+			dht.transactionManager.findNode(
+				&node{addr: raddr},
+				dht.node.id.RawString(),
+			)
+		}
 	}
 }
 

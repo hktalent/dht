@@ -127,8 +127,9 @@ func (r StunList) GetStunLists() []string {
 	return aStunLists
 }
 
+// 日志处理
 func Log(a ...interface{}) {
-	fmt.Println(a...)
+	// fmt.Println(a...)
 }
 
 // 获取本机NAT的public ip和port
