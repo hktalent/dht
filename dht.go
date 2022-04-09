@@ -574,7 +574,7 @@ func (dht *DHT) Run() {
 	c := make(chan os.Signal)
 	//监听指定信号 ctrl+c kill
 	signal.Notify(c, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM,
-		syscall.SIGQUIT, syscall.SIGUSR1, syscall.SIGUSR2)
+		syscall.SIGQUIT)
 
 	dht.Log("DHT Server is start ...")
 	for {
