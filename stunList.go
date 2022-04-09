@@ -96,7 +96,7 @@ func (r StunList) GetStunLists() []string {
 
 // 获取本机NAT的public ip和port
 func (r StunList) GetSelfPublicIpPort() (string, int) {
-	a := r.GetStunLists()[0:1]
+	a := r.GetStunLists()
 	message := stun.MustBuild(stun.TransactionID, stun.BindingRequest)
 	// len(a)
 	done := make(chan struct{}, 16)

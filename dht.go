@@ -144,13 +144,18 @@ func NewStandardConfig() *Config {
 		Log:            log.New(os.Stdout, "", 5),
 	}
 	// fmt.Printf("start get IP ")
+	// ip, port := xx.StunList.GetSelfPublicIpPort()
 	ip, port := xx.StunList.GetSelfPublicIpPort()
+
 	// Nat 后的port
 	xx.Address = fmt.Sprintf(":%d", port)
-	xx.PublicIp = ip
-	if nil != xx.Log {
-		xx.Log.Println("your public IP is ", ip, " port ", port)
+	if "" != ip {
+		xx.PublicIp = ip
+		if nil != xx.Log {
+			xx.Log.Println("your public IP is ", ip, " port ", port)
+		}
 	}
+
 	return xx
 }
 
@@ -354,11 +359,11 @@ func (dht *DHT) appendIps2DhtTracker(s string, fileName string) {
 // 网络切换时，外部ip发生变化，得重新来
 // 每10秒执行一次
 func (dht *DHT) checkPublicIp() bool {
-	ip, _ := dht.Config.StunList.GetSelfPublicIpPort1()
+	ip, _ := dht.Config.StunList.GetSelfPublicIpPort()
 	// ip, err := getRemoteIP()
 	// dht.Log("start checkPublicIp", ip, dht.Config.PublicIp)
 	// if nil == err && ip != dht.Config.PublicIp {
-	if ip != dht.Config.PublicIp {
+	if "" != ip && ip != dht.Config.PublicIp {
 		dht.Log("ip is changed new: ", ip, " old: ", dht.Config.PublicIp, " now clearn all blackList")
 		dht.blackList.ClearAll()
 		dht.self2black()
