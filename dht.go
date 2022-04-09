@@ -120,7 +120,6 @@ func NewStandardConfig() *Config {
 		//  BT 下载器首先尝试监听 6881 端口, 若端口被占用被继续尝试监听 6882 端口, 若仍被占用则继续监听 6883, 6884 ... 直到 6889 端口, 若以上所有端口都被占用了, 则放弃尝试
 		Address: ":0",
 		// Address:    ":6889",
-		PrimeNodes: StunList{}.GetDhtUdpLists(),
 		// 节点、kbucket有效期15分钟
 		NodeExpriedAfter:    time.Duration(time.Minute * 15),
 		KBucketExpiredAfter: time.Duration(time.Minute * 15),
@@ -143,9 +142,10 @@ func NewStandardConfig() *Config {
 		QueryWorkLimit: 4096,
 		Log:            log.New(os.Stdout, "", 5),
 	}
+	xx.PrimeNodes = xx.StunList.GetDhtUdpLists()
 	// fmt.Printf("start get IP ")
 	// ip, port := xx.StunList.GetSelfPublicIpPort()
-	ip, port := xx.StunList.GetSelfPublicIpPort1()
+	ip, port := xx.StunList.GetSelfPublicIpPort()
 
 	// Nat 后的port
 	xx.Address = fmt.Sprintf(":%d", port)
@@ -315,16 +315,6 @@ func (dht *DHT) getIps(domain string) {
 	}
 }
 
-// 从data中查找element
-func SliceIndex(element string, data []string) int {
-	for k, v := range data {
-		if element == v {
-			return k
-		}
-	}
-	return -1
-}
-
 // 记录更多DHT Tracker ip:port 为下一版本提供更多加速的动力
 func (dht *DHT) appendIps2DhtTracker(s string, fileName string) {
 	if bCloseRcdIps {
@@ -334,7 +324,7 @@ func (dht *DHT) appendIps2DhtTracker(s string, fileName string) {
 	if "" == fileName {
 		fileName = "/ips.txt"
 	}
-	n = SliceIndex(s, dht.Config.PrimeNodes)
+	n = dht.Config.StunList.SliceIndex(s, dht.Config.PrimeNodes)
 	dirname, err := os.UserHomeDir()
 	if err != nil {
 		return
@@ -359,7 +349,7 @@ func (dht *DHT) appendIps2DhtTracker(s string, fileName string) {
 // 网络切换时，外部ip发生变化，得重新来
 // 每10秒执行一次
 func (dht *DHT) checkPublicIp() bool {
-	ip, _ := dht.Config.StunList.GetSelfPublicIpPort1()
+	ip, _ := dht.Config.StunList.GetSelfPublicIpPort()
 	// ip, err := getRemoteIP()
 	// dht.Log("start checkPublicIp", ip, dht.Config.PublicIp)
 	// if nil == err && ip != dht.Config.PublicIp {
@@ -498,7 +488,7 @@ func (dht *DHT) AnnouncePeer(infoHash string) error {
 		infoHash = string(data)
 	}
 	// 加到发布的列表中，定时器进行发布，不仅仅是一次
-	if -1 == SliceIndex(infoHash, dht.AnnouncePeerLists) {
+	if -1 == dht.Config.StunList.SliceIndex(infoHash, dht.AnnouncePeerLists) {
 		dht.AnnouncePeerLists = append(dht.AnnouncePeerLists, infoHash)
 	}
 	dht.doAnnouncePeer()
@@ -537,7 +527,7 @@ func (dht *DHT) GetPeers(infoHash string) error {
 	for _, no := range neighbors {
 		dht.transactionManager.getPeers(no, infoHash)
 	}
-	if -1 == SliceIndex(infoHash, dht.GetPeerLists) {
+	if -1 == dht.Config.StunList.SliceIndex(infoHash, dht.GetPeerLists) {
 		dht.GetPeerLists = append(dht.GetPeerLists, infoHash)
 	}
 
