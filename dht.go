@@ -10,8 +10,10 @@ import (
 	"math"
 	"net"
 	"os"
+	"os/signal"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -543,6 +545,9 @@ func (dht *DHT) DoAllGetPeers() {
 		dht.GetPeers(v)
 	}
 }
+func (dht *DHT) Stop() {
+
+}
 
 /*
 Run starts the dht.
@@ -565,23 +570,40 @@ func (dht *DHT) Run() {
 	tick := time.Tick(dht.CheckKBucketPeriod)
 
 	tick1 := time.Tick(time.Duration(time.Second * 10))
+	//创建监听退出chan
+	c := make(chan os.Signal)
+	//监听指定信号 ctrl+c kill
+	signal.Notify(c, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM,
+		syscall.SIGQUIT, syscall.SIGUSR1, syscall.SIGUSR2)
+
 	dht.Log("DHT Server is start ...")
 	for {
 		select {
+		case <-c:
+			{
+				dht.Stop()
+				os.Exit(0)
+			}
 		case pkt = <-dht.packets:
-			handle(dht, pkt)
+			{
+				handle(dht, pkt)
+			}
 		case <-tick1:
-			dht.checkPublicIp()
-			// 发布
-			go dht.doAnnouncePeer()
-			// 获取
-			go dht.DoAllGetPeers()
+			{
+				dht.checkPublicIp()
+				// 发布
+				go dht.doAnnouncePeer()
+				// 获取
+				go dht.DoAllGetPeers()
+			}
 		// 每30秒执行一次
 		case <-tick:
-			if dht.routingTable.Len() == 0 {
-				dht.join()
-			} else if dht.transactionManager.len() == 0 {
-				go dht.routingTable.Fresh()
+			{
+				if dht.routingTable.Len() == 0 {
+					dht.join()
+				} else if dht.transactionManager.len() == 0 {
+					go dht.routingTable.Fresh()
+				}
 			}
 		}
 	}
