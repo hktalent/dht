@@ -117,7 +117,9 @@ func NewStandardConfig() *Config {
 		KBucketSize: 8,
 		Network:     "udp4",
 		// fix: panic: listen udp4 :6881: bind: address already in use
-		Address:    ":0",
+		//  BT 下载器首先尝试监听 6881 端口, 若端口被占用被继续尝试监听 6882 端口, 若仍被占用则继续监听 6883, 6884 ... 直到 6889 端口, 若以上所有端口都被占用了, 则放弃尝试
+		Address: ":0",
+		// Address:    ":6889",
 		PrimeNodes: StunList{}.GetDhtUdpLists(),
 		// 节点、kbucket有效期15分钟
 		NodeExpriedAfter:    time.Duration(time.Minute * 15),
@@ -142,14 +144,13 @@ func NewStandardConfig() *Config {
 		Log:            log.New(os.Stdout, "", 5),
 	}
 	// fmt.Printf("start get IP ")
-	ip, _ := xx.StunList.GetSelfPublicIpPort()
-	// ip, err := getRemoteIP()
-	// if nil == err {
+	ip, port := xx.StunList.GetSelfPublicIpPort()
+	// Nat 后的port
+	xx.Address = fmt.Sprintf(":%d", port)
 	xx.PublicIp = ip
 	if nil != xx.Log {
-		xx.Log.Println("your public IP is ", ip)
+		xx.Log.Println("your public IP is ", ip, " port ", port)
 	}
-	// }
 	return xx
 }
 
