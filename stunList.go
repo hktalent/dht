@@ -43,7 +43,7 @@ func (r StunList) GetDhtListArr() [][]string {
 	var aRst [][]string
 	for _, x := range a {
 		if -1 == strings.Index(x, "://") {
-			aRst = append(aRst, []string{"udp://" + x})
+			aRst = append(aRst, []string{"udp://" + x + "/announce"})
 		}
 	}
 	return aRst
