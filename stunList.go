@@ -38,16 +38,17 @@ func (r StunList) GetDhtMma() []multiaddr.Multiaddr {
 	}
 	return mma
 }
-func (r StunList) GetDhtListArr() [][]string {
-	a := r.GetDhtList()
-	var aRst [][]string
-	for _, x := range a {
-		if -1 == strings.Index(x, "://") {
-			aRst = append(aRst, []string{"udp://" + x + "/announce"})
-		}
-	}
-	return aRst
-}
+
+// func (r StunList) GetDhtListArr() [][]string {
+// 	a := r.GetDhtList()
+// 	var aRst [][]string
+// 	for _, x := range a {
+// 		if -1 == strings.Index(x, "://") {
+// 			aRst = append(aRst, []string{"udp://" + x + "/announce"})
+// 		}
+// 	}
+// 	return aRst
+// }
 
 //go:embed dhTrackers.txt
 var bDhTrackers []byte
@@ -78,7 +79,7 @@ func (r StunList) GetDhtList() []string {
 	a := r.GetDhtListRawA()
 	for i, x := range a {
 		if -1 == strings.Index(x, "://") {
-			a[i] = "udp://" + x
+			a[i] = "udp://" + x + "/announce"
 		}
 	}
 	return a
