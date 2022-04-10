@@ -10,10 +10,8 @@ import (
 	"math"
 	"net"
 	"os"
-	"os/signal"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 )
 
@@ -570,20 +568,20 @@ func (dht *DHT) Run() {
 	tick := time.Tick(dht.CheckKBucketPeriod)
 
 	tick1 := time.Tick(time.Duration(time.Second * 10))
-	//创建监听退出chan
-	c := make(chan os.Signal)
-	//监听指定信号 ctrl+c kill
-	signal.Notify(c, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM,
-		syscall.SIGQUIT)
+	// //创建监听退出chan
+	// c := make(chan os.Signal)
+	// //监听指定信号 ctrl+c kill
+	// signal.Notify(c, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM,
+	// 	syscall.SIGQUIT)
 
 	dht.Log("DHT Server is start ...")
 	for {
 		select {
-		case <-c:
-			{
-				dht.Stop()
-				os.Exit(0)
-			}
+		// case <-c:
+		// 	{
+		// 		dht.Stop()
+		// 		os.Exit(0)
+		// 	}
 		case pkt = <-dht.packets:
 			{
 				handle(dht, pkt)
