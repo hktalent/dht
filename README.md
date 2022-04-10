@@ -10,7 +10,7 @@
 - :white_check_mark: Rich annotations
 - :white_check_mark: Friendly UML diagram rendering
 - :white_check_mark: china,please use VPN over GWF
-- :white_check_mark: fix 启动时卡顿问题
+- :white_check_mark: fix Stuttering problem at startup
 - :white_check_mark: fix do one time bug,now to tick 30 Second to do it
 - :white_check_mark: fix public ip changed, cleanAll blackIp to do join
 
@@ -45,7 +45,11 @@ to see more samples.
 ```bash
 cd sample/spider
 go build spider.go
+# your Elasticsearch is http://127.0.0.1:9200/dht_index
 ./spider -resUrl="http://127.0.0.1:9200/dht_index/_doc/" -address=":0"
+open http://127.0.0.1:9200/dht_index/_search?q=GB%20and%20mp4&pretty=true
+open http://127.0.0.1:9200/dht_index/_search?q=1080P%20GB%20and%20mp4&pretty=true
+open http://127.0.0.1:9200/dht_index/_search?q=pentest%20pdf&pretty=true
 ```
 
 ```go
