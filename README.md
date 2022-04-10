@@ -1,6 +1,7 @@
 ![](https://raw.githubusercontent.com/hktalent/dht/master/dht.svg)
 <img width="830" src="https://user-images.githubusercontent.com/18223385/161761145-87883c44-9fa6-49f0-b113-5b1f8c37964e.png">
-<img width="830" src="https://user-images.githubusercontent.com/18223385/162596289-e7b928fa-6e74-49e7-b663-5738de823149.png">
+<img width="410" src="https://user-images.githubusercontent.com/18223385/162596289-e7b928fa-6e74-49e7-b663-5738de823149.png">
+<img width="410" alt="image" src="https://user-images.githubusercontent.com/18223385/162596922-315c3408-9c39-4e4c-a85c-acd7100ce581.png">
 
 ## what's the new
 - :white_check_mark: update all depend mod to new
