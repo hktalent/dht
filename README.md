@@ -43,9 +43,36 @@ go get -u github.com/hktalent/dht@latest
 Below is a simple spider. You can move [here](https://github.com/hktalent/dht/blob/master/sample)
 to see more samples.
 
+$ cat $PWD/config/elasticsearch.yml
+```
+cluster.name: my-application
+node.name: node-1
+path.data: /usr/share/elasticsearch/data
+path.logs: /usr/share/elasticsearch/logs
+network.host: 0.0.0.0
+transport.host: 0.0.0.0
+network.publish_host: 192.168.0.107
+http.port: 9200
+discovery.seed_hosts: [ "192.168.0.112:9300","192.168.0.107:9301","192.168.0.107:9302", "192.168.0.107:9300"]
+cluster.initial_master_nodes: [ "192.168.0.112:9300","192.168.0.107:9301","192.168.0.107:9302", "192.168.0.107:9300"]
+cluster.routing.allocation.same_shard.host: true
+discovery.zen.fd.ping_timeout: 1m
+discovery.zen.fd.ping_retries: 5
+http.cors.enabled: true
+http.cors.allow-origin: "*"
+http.cors.allow-methods : OPTIONS, HEAD, GET, POST, PUT, DELETE
+http.cors.allow-headers : Authorization, X-Requested-With,X-Auth-Token,Content-Type, Content-Length
+transport.tcp.port: 9300
+http.max_content_length: 400mb
+indices.query.bool.max_clause_count: 20000
+cluster.routing.allocation.disk.threshold_enabled: false
+```
+
 ```bash
 cd sample/spider
 go build spider.go
+docker run --restart=always --ulimit nofile=65536:65536 -e "discovery.type=single-node" --net esnet -p 9200:9200 -p 9300:9300 -d --name es -v $PWD/logs:/usr/share/elasticsearch/logs -v $PWD/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml -v $PWD/config/jvm.options:/usr/share/elasticsearch/config/jvm.options  -v $PWD/data:/usr/share/elasticsearch/data  hktalent/elasticsearch:7.16.2
+
 # your Elasticsearch is http://127.0.0.1:9200/dht_index
 ./spider -resUrl="http://127.0.0.1:9200/dht_index/_doc/" -address=":0"
 open http://127.0.0.1:9200/dht_index/_search?q=GB%20and%20mp4&pretty=true
